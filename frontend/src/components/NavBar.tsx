@@ -38,9 +38,14 @@ export default function NavBar() {
             <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black text-xl group-hover:bg-indigo-500 transition-colors shadow-md shadow-indigo-500/20">
               E
             </div>
-            <span className="font-extrabold text-xl tracking-tight text-gray-900 dark:text-white">
-              EventScout
-            </span>
+            <div className="flex flex-col">
+              <span className="font-extrabold text-xl tracking-tight text-gray-900 dark:text-white leading-none mb-0.5">
+                EventScout
+              </span>
+              <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 leading-none">
+                by KriVee
+              </span>
+            </div>
           </Link>
         </div>
 
