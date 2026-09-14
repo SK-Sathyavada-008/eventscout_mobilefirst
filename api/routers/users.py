@@ -84,6 +84,7 @@ async def get_profile(
         "email": user_doc.get("email", ""),
         "is_admin": user_doc.get("is_admin", False),
         "saved_event_ids": user_doc.get("saved_event_ids", []),
+        "applied_event_ids": user_doc.get("applied_event_ids", []),
         "saved_count": len(user_doc.get("saved_event_ids", [])),
         "interests": user_doc.get("interests", []),
         "skills": user_doc.get("skills", []),
@@ -123,6 +124,7 @@ async def update_profile(
         "email": user_doc.get("email", ""),
         "is_admin": user_doc.get("is_admin", False),
         "saved_event_ids": user_doc.get("saved_event_ids", []),
+        "applied_event_ids": user_doc.get("applied_event_ids", []),
         "message": "Profile updated successfully.",
     }
 

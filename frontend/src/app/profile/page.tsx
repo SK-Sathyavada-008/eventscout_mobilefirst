@@ -45,8 +45,8 @@ function ProfileContent() {
 
     setSavingUsername(true);
     try {
-      if (token && !token.startsWith("demo-token-")) {
-        const res = await fetch(`${apiUrl}/me/profile`, {
+      if (token) {
+        const res = await fetch(`${apiUrl}/users/me/username`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",

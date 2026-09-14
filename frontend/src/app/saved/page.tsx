@@ -25,9 +25,9 @@ function SavedEventsContent() {
   const fetchSavedEvents = useCallback(async () => {
     setLoading(true);
     try {
-      if (token && !token.startsWith("demo-token-")) {
+      if (token) {
         try {
-          const res = await fetch(`${apiUrl}/events/saved`, {
+          const res = await fetch(`${apiUrl}/users/me/saved-events`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (res.ok) {
@@ -103,7 +103,7 @@ function SavedEventsContent() {
     }
 
     try {
-      if (token && !token.startsWith("demo-token-")) {
+      if (token) {
         await fetch(`${apiUrl}/events/${eventId}/save`, {
           method: currentlySaved ? "DELETE" : "POST",
           headers: { Authorization: `Bearer ${token}` },

@@ -23,15 +23,20 @@ export default function EventDetailPage() {
   const { user, token, isAuthenticated, refreshUser, updateUser } = useAuth();
   const [isSaved, setIsSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isApplied, setIsApplied] = useState(false);
+  const [applying, setApplying] = useState(false);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-  // Check saved state
+  // Check saved/applied state
   useEffect(() => {
     if (event?.id && user?.saved_event_ids) {
       setIsSaved(user.saved_event_ids.includes(event.id));
     }
-  }, [event?.id, user?.saved_event_ids]);
+    if (event?.id && user?.applied_event_ids) {
+      setIsApplied(user.applied_event_ids.includes(event.id));
+    }
+  }, [event?.id, user?.saved_event_ids, user?.applied_event_ids]);
 
   const rawId = params?.id as string;
   const decodedId = decodeURIComponent(rawId || "").trim();
@@ -127,7 +132,7 @@ export default function EventDetailPage() {
     updateUser({ saved_event_ids: newSavedList });
 
     try {
-      if (!token.startsWith("demo-token-")) {
+      if (token) {
         await fetch(`${apiUrl}/events/${event.id}/save`, {
           method: willBeSaved ? "POST" : "DELETE",
           headers: { Authorization: `Bearer ${token}` },
@@ -145,6 +150,45 @@ export default function EventDetailPage() {
       console.warn("Saved event updated offline:", err);
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Handle Apply Toggle
+  const handleToggleApply = async () => {
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    if (!event?.id) return;
+
+    setApplying(true);
+    const willBeApplied = !isApplied;
+    setIsApplied(willBeApplied);
+
+    const newAppliedList = willBeApplied
+      ? [...(user?.applied_event_ids || []), event.id]
+      : (user?.applied_event_ids || []).filter((eId) => eId !== event.id);
+    updateUser({ applied_event_ids: newAppliedList });
+
+    try {
+      if (token) {
+        await fetch(`${apiUrl}/events/${event.id}/apply`, {
+          method: willBeApplied ? "POST" : "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+      refreshUser();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("eventscout-toast", {
+            detail: { message: willBeApplied ? "Marked as applied" : "Unmarked as applied" },
+          })
+        );
+      }
+    } catch (err) {
+      console.warn("Applied event updated offline:", err);
+    } finally {
+      setApplying(false);
     }
   };
 
@@ -169,6 +213,38 @@ export default function EventDetailPage() {
       setCopiedShare(true);
       setTimeout(() => setCopiedShare(false), 2500);
     } catch {}
+  };
+
+  // Generate and download .ics file
+  const handleAddToCalendar = () => {
+    if (!event) return;
+    const formatICSDate = (dateString: string) => {
+      const d = new Date(dateString);
+      return d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+    };
+
+    const start = formatICSDate(event.date_time);
+    const icsContent = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "BEGIN:VEVENT",
+      `DTSTART:${start}`,
+      `SUMMARY:${event.title}`,
+      `DESCRIPTION:${event.description || "View full details on EventScout."}`,
+      `LOCATION:${event.mode_location || "Online"}`,
+      `URL:${event.registration_url || event.event_url || ""}`,
+      "END:VEVENT",
+      "END:VCALENDAR"
+    ].join("\r\n");
+
+    const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${event.title.replace(/\\s+/g, "_")}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   if (loading) {
@@ -499,6 +575,34 @@ export default function EventDetailPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
             </svg>
             <span className="hidden sm:inline">{isSaved ? "Saved" : "Save Event"}</span>
+          </button>
+
+          <button
+            onClick={handleToggleApply}
+            disabled={applying}
+            className={`py-3.5 px-4 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all active-press ${
+              isApplied
+                ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                : "bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700"
+            }`}
+          >
+            <svg
+              className="w-4 h-4"
+              fill={isApplied ? "currentColor" : "none"}
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="hidden sm:inline">{isApplied ? "Applied" : "Mark Applied"}</span>
+          </button>
+
+          <button
+            onClick={handleAddToCalendar}
+            className="hidden sm:flex py-3.5 px-4 rounded-xl bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700 text-xs font-bold items-center justify-center gap-2 transition-all active-press"
+          >
+            📅 <span className="hidden md:inline">Add to Calendar</span>
           </button>
 
           <a

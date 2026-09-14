@@ -112,6 +112,7 @@ class UserDatabase:
             "preferred_event_types": [],
             "preferred_modes": [],
             "saved_event_ids": [],
+            "applied_event_ids": [],
             "is_admin": False,
             "notification_preferences": {
                 "dashboard_enabled": True,
@@ -293,3 +294,45 @@ class UserDatabase:
         if not doc:
             return []
         return doc.get("saved_event_ids", [])
+
+    # ------------------------------------------------------------------
+    # Apply / Unapply events
+    # ------------------------------------------------------------------
+
+    def apply_event(self, user_id: str, event_id: str) -> bool:
+        col = self.get_collection()
+        try:
+            obj_id = ObjectId(user_id)
+        except Exception:
+            return False
+
+        result = col.update_one(
+            {"_id": obj_id},
+            {"$addToSet": {"applied_event_ids": event_id}},
+        )
+        return result.matched_count > 0
+
+    def unapply_event(self, user_id: str, event_id: str) -> bool:
+        col = self.get_collection()
+        try:
+            obj_id = ObjectId(user_id)
+        except Exception:
+            return False
+
+        result = col.update_one(
+            {"_id": obj_id},
+            {"$pull": {"applied_event_ids": event_id}},
+        )
+        return result.matched_count > 0
+
+    def get_applied_event_ids(self, user_id: str) -> List[str]:
+        col = self.get_collection()
+        try:
+            obj_id = ObjectId(user_id)
+        except Exception:
+            return []
+
+        doc = col.find_one({"_id": obj_id}, {"applied_event_ids": 1})
+        if not doc:
+            return []
+        return doc.get("applied_event_ids", [])

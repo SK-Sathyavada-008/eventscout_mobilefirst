@@ -15,6 +15,7 @@ export default function DiscoverPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isOffline, setIsOffline] = useState(false);
 
   // Auth & Saved state
   const { user, token, isAuthenticated, refreshUser, updateUser } = useAuth();
@@ -69,31 +70,21 @@ export default function DiscoverPage() {
           localStorage.setItem("eventscout_cached_events", JSON.stringify(data));
         }
       } catch (err) {
-        console.warn("API unreachable, falling back to local pre-scraped events:", err);
-        // Try local storage cache first, then fallback_events.json
+        console.warn("API unreachable, falling back to local cache:", err);
+        // Try local storage cache first
         if (typeof window !== "undefined") {
           const cached = localStorage.getItem("eventscout_cached_events");
           if (cached) {
             try {
               setEvents(JSON.parse(cached));
               setError(null);
+              setIsOffline(true);
               setLoading(false);
               return;
             } catch {}
           }
         }
 
-        try {
-          const fallbackRes = await fetch("/fallback_events.json");
-          if (fallbackRes.ok) {
-            const fallbackData = await fallbackRes.json();
-            setEvents(fallbackData);
-            setError(null);
-            return;
-          }
-        } catch (fallbackErr) {
-          console.error("Failed to load fallback events:", fallbackErr);
-        }
         setError("Unable to load events. Make sure EventScout backend is active.");
       } finally {
         setLoading(false);
@@ -130,7 +121,7 @@ export default function DiscoverPage() {
       }
 
       try {
-        if (!token.startsWith("demo-token-")) {
+        if (token) {
           const method = currentlySaved ? "DELETE" : "POST";
           await fetch(`${apiUrl}/events/${eventId}/save`, {
             method,
@@ -203,13 +194,21 @@ export default function DiscoverPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-6">
       {/* Hero Header matching Screen 2 */}
-      <div className="mb-4 sm:mb-6">
-        <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight mb-1">
-          Discover what's happening in tech.
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-400">
-          Handpicked hackathons, workshops, and student opportunities.
-        </p>
+      <div className="mb-4 sm:mb-6 flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight mb-1">
+            Discover what's happening in tech.
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-400">
+            Handpicked hackathons, workshops, and student opportunities.
+          </p>
+        </div>
+        {isOffline && (
+          <div className="bg-amber-500/20 border border-amber-500/40 text-amber-400 text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 mt-1 sm:mt-2 shrink-0">
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+            Offline Mode
+          </div>
+        )}
       </div>
 
       {/* Mobile Search Bar */}

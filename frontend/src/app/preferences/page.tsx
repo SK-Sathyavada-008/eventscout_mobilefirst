@@ -103,7 +103,7 @@ export default function PreferencesPage() {
     };
 
     try {
-      if (token && !token.startsWith("demo-token-")) {
+      if (token) {
         const res = await fetch(`${apiUrl}/me/preferences`, {
           method: "PUT",
           headers: {

@@ -19,7 +19,7 @@ export default function AlertsPage() {
   const fetchAlerts = useCallback(async () => {
     setLoading(true);
     try {
-      if (token && !token.startsWith("demo-token-")) {
+      if (token) {
         const res = await fetch(`${apiUrl}/notifications?limit=30`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -29,59 +29,13 @@ export default function AlertsPage() {
           setLoading(false);
           return;
         }
+      } else {
+        // If unauthenticated or offline, we just show empty.
+        setNotifications([]);
       }
-
-      // Realistic notification items
-      setNotifications([
-        {
-          id: "alert-1",
-          user_id: "user-1",
-          event_id: "devfolio-1",
-          type: "deadline",
-          title: "Registration closing soon",
-          message: "BreakPoint 2025 — Closes in 2 days",
-          event_url: "/explore?q=BreakPoint",
-          read: false,
-          created_at: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-          metadata: {
-            organizer: "AWS SBG",
-            location: "Hyderabad, Offline",
-          },
-        },
-        {
-          id: "alert-2",
-          user_id: "user-1",
-          event_id: "mlh-1",
-          type: "recommendation",
-          title: "New event for you",
-          message: "Google Gen AI Workshop — Matches your interests (AI/ML)",
-          event_url: "/explore?q=AI",
-          read: false,
-          created_at: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
-          metadata: {
-            organizer: "Google Developers",
-            location: "Online",
-          },
-        },
-        {
-          id: "alert-3",
-          user_id: "user-1",
-          event_id: "aws-1",
-          type: "reminder",
-          title: "Reminder",
-          message: "AWS Certification Bootcamp — Starts tomorrow",
-          event_url: "/explore?q=AWS",
-          read: true,
-          created_at: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-          metadata: {
-            organizer: "AWS Training",
-            location: "Online",
-          },
-        },
-      ]);
     } catch (err) {
       console.warn("Could not fetch live alerts:", err);
-    } finally {
+      setNotifications([]);
       setLoading(false);
     }
   }, [apiUrl, token]);
@@ -94,7 +48,7 @@ export default function AlertsPage() {
   const handleMarkAllRead = async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     try {
-      if (token && !token.startsWith("demo-token-")) {
+      if (token) {
         await fetch(`${apiUrl}/notifications/read-all`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -108,7 +62,7 @@ export default function AlertsPage() {
       prev.map((n) => (n.id === notif.id ? { ...n, read: true } : n))
     );
     try {
-      if (token && !token.startsWith("demo-token-")) {
+      if (token) {
         await fetch(`${apiUrl}/notifications/${notif.id}/read`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },

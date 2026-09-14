@@ -165,3 +165,56 @@ async def unsave_event(
         )
 
     return {"saved": False, "event_id": event_id}
+
+
+@router.post(
+    "/events/{event_id}/apply",
+    status_code=status.HTTP_200_OK,
+    summary="Mark an event as applied for the current user",
+)
+async def apply_event(
+    event_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    obj_id = _validate_event_id(event_id)
+
+    event_db = EventDatabase()
+    col = event_db.get_collection()
+    event_doc = col.find_one({"_id": obj_id}, {"_id": 1})
+    if not event_doc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Event '{event_id}' not found.",
+        )
+
+    user_db = UserDatabase()
+    success = user_db.apply_event(current_user["id"], event_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+
+    return {"applied": True, "event_id": event_id}
+
+
+@router.delete(
+    "/events/{event_id}/apply",
+    status_code=status.HTTP_200_OK,
+    summary="Remove an applied event for the current user",
+)
+async def unapply_event(
+    event_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    _validate_event_id(event_id)
+
+    user_db = UserDatabase()
+    success = user_db.unapply_event(current_user["id"], event_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+
+    return {"applied": False, "event_id": event_id}

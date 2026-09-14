@@ -92,7 +92,7 @@ function ExploreContent() {
       updateUser({ saved_event_ids: newSavedList });
 
       try {
-        if (!token.startsWith("demo-token-")) {
+        if (token) {
           await fetch(`${apiUrl}/events/${eventId}/save`, {
             method: currentlySaved ? "DELETE" : "POST",
             headers: { Authorization: `Bearer ${token}` },

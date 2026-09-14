@@ -139,21 +139,29 @@ class RankingService:
             user_modes = [m.lower() for m in (user.get("preferred_modes") or [])]
 
             matched_interests = []
+            interest_score_boost = 0.0
             for interest in user_interests:
-                if interest and re.search(r"\b" + re.escape(interest) + r"\b", combined_text):
-                    matched_interests.append(interest)
+                if interest:
+                    occurrences = len(re.findall(r"\b" + re.escape(interest) + r"\b", combined_text))
+                    if occurrences > 0:
+                        matched_interests.append(interest)
+                        interest_score_boost += 0.10 + (min(occurrences, 3) * 0.02)
 
             matched_skills = []
+            skill_score_boost = 0.0
             for skill in user_skills:
-                if skill and re.search(r"\b" + re.escape(skill) + r"\b", combined_text):
-                    matched_skills.append(skill)
+                if skill:
+                    occurrences = len(re.findall(r"\b" + re.escape(skill) + r"\b", combined_text))
+                    if occurrences > 0:
+                        matched_skills.append(skill)
+                        skill_score_boost += 0.15 + (min(occurrences, 3) * 0.03)
 
             total_matches = len(matched_interests) + len(matched_skills)
             if total_matches > 0:
-                personalization_score = min(1.0, 0.50 + total_matches * 0.15)
-                top_matched = (matched_interests + matched_skills)[:3]
-                display_topics = ", ".join(m.capitalize() for m in top_matched)
-                why_recommended.append(f"Matches your {display_topics} interests")
+                personalization_score = min(1.0, 0.50 + interest_score_boost + skill_score_boost)
+                top_matched = (matched_skills + matched_interests)[:3]
+                display_topics = ", ".join(m.title() for m in top_matched)
+                why_recommended.append(f"Strong match for your {display_topics} profile")
 
             # Preferred event types bonus
             for ptype in user_event_types:

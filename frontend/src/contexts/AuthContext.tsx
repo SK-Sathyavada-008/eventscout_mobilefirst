@@ -34,26 +34,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function createDefaultUser(identifier: string, isEmail: boolean): User {
-  const username = isEmail ? identifier.split("@")[0] : identifier;
-  const email = isEmail ? identifier : `${identifier}@example.com`;
-  return {
-    id: "usr_" + Math.random().toString(36).substring(2, 9),
-    username,
-    email,
-    interests: ["AI/ML", "Web3", "Cloud & DevOps"],
-    skills: ["Python", "React", "TypeScript"],
-    preferred_event_types: ["hackathon", "workshop"],
-    preferred_modes: ["online", "in-person"],
-    saved_event_ids: [],
-    notification_preferences: {
-      dashboard_enabled: true,
-      browser_enabled: true,
-      email_enabled: true,
-    },
-    created_at: new Date().toISOString(),
-  };
-}
+// Default user generation removed as it was part of demo-ware.
 
 // ------------------------------------------------------------------
 // Provider
@@ -81,10 +62,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (storedToken) {
       setToken(storedToken);
-      if (storedToken.startsWith("demo-token-")) {
-        setIsLoading(false);
-        return;
-      }
 
       fetchMe(storedToken)
         .then((fetchedUser) => {
@@ -147,27 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!isNetworkError) {
         throw err;
       }
-
-      // Seamless fallback for production demo when backend is offline
-      const storedUserStr = localStorage.getItem("eventscout_user");
-      let fallbackUser: User;
-      if (storedUserStr) {
-        try {
-          fallbackUser = JSON.parse(storedUserStr);
-          if (isEmail) fallbackUser.email = cleanId;
-          else fallbackUser.username = cleanId;
-        } catch {
-          fallbackUser = createDefaultUser(cleanId, isEmail);
-        }
-      } else {
-        fallbackUser = createDefaultUser(cleanId, isEmail);
-      }
-
-      const demoToken = "demo-token-" + Date.now();
-      localStorage.setItem(TOKEN_KEY, demoToken);
-      localStorage.setItem("eventscout_user", JSON.stringify(fallbackUser));
-      setToken(demoToken);
-      setUser(fallbackUser);
+      throw new Error("Unable to connect to EventScout backend. Please try again later.");
     }
   }, []);
 
@@ -205,34 +162,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           err.message.includes("Load failed") ||
           err.name === "TypeError";
 
-        if (!isNetworkError) {
-          throw err;
-        }
-
-        // Seamless fallback for production demo when backend is offline
-        const fallbackUser: User = {
-          id: "usr_" + Math.random().toString(36).substring(2, 9),
-          username: cleanUsername,
-          email: cleanEmail,
-          interests: ["AI/ML", "Web3", "Cloud & DevOps"],
-          skills: ["Python", "React", "TypeScript"],
-          preferred_event_types: ["hackathon", "workshop"],
-          preferred_modes: ["online", "in-person"],
-          saved_event_ids: [],
-          notification_preferences: {
-            dashboard_enabled: true,
-            browser_enabled: true,
-            email_enabled: true,
-          },
-          created_at: new Date().toISOString(),
-        };
-
-        const demoToken = "demo-token-" + Date.now();
-        localStorage.setItem(TOKEN_KEY, demoToken);
-        localStorage.setItem("eventscout_user", JSON.stringify(fallbackUser));
-        setToken(demoToken);
-        setUser(fallbackUser);
+      if (!isNetworkError) {
+        throw err;
       }
+      throw new Error("Unable to connect to EventScout backend. Please try again later.");
+    }
     },
     []
   );
@@ -253,15 +187,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     if (!token) return;
-    if (token.startsWith("demo-token-")) {
-      const storedUserStr = localStorage.getItem("eventscout_user");
-      if (storedUserStr) {
-        try {
-          setUser(JSON.parse(storedUserStr));
-        } catch {}
-      }
-      return;
-    }
 
     try {
       const updated = await fetchMe(token);

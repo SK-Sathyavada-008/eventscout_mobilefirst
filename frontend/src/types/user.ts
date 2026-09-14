@@ -13,6 +13,7 @@ export interface User {
   preferred_event_types: string[];
   preferred_modes: string[];
   saved_event_ids: string[];
+  applied_event_ids: string[];
   is_admin?: boolean;
   notification_preferences?: NotificationPreferences;
   created_at: string;
