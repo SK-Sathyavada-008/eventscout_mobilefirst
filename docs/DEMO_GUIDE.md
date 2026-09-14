@@ -1,4 +1,4 @@
-# EventScout — Technical Interview Demo Guide
+# EventScout — Demo Guide
 
 This document contains step-by-step walkthrough scripts for demonstrating EventScout's capabilities in a live engineering interview or portfolio review.
 
