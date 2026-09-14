@@ -43,47 +43,66 @@ export default function NotificationBell() {
       prevUnreadRef.current = data.unread_count;
     } catch (err) {
       console.warn("API notifications unreachable, using fallback notifications:", err);
-      setNotifications((prev) => {
-        // Try to generate dynamic notifications from cached events
-        if (typeof window !== "undefined") {
-          const cached = localStorage.getItem("eventscout_cached_events");
-          if (cached) {
-            try {
-              const allEvents = JSON.parse(cached);
-              const topEvents = allEvents
-                .sort((a: any, b: any) => (b.ranking_score || 0) - (a.ranking_score || 0))
-                .slice(0, 2);
-              
-              if (topEvents.length > 0) {
-                return topEvents.map((ev: any, index: number) => ({
-                  id: `notif-fallback-${ev.id || index}`,
+      
+      let readIds = new Set<string>();
+      if (typeof window !== "undefined") {
+        const cachedReadIds = localStorage.getItem("eventscout_read_notifications");
+        if (cachedReadIds) {
+          try {
+            JSON.parse(cachedReadIds).forEach((id: string) => readIds.add(id));
+          } catch {}
+        }
+      }
+
+      let fallbackNotifs: NotificationItem[] = [];
+
+      // Try to generate dynamic notifications from cached events
+      if (typeof window !== "undefined") {
+        const cached = localStorage.getItem("eventscout_cached_events");
+        if (cached) {
+          try {
+            const allEvents = JSON.parse(cached);
+            const topEvents = allEvents
+              .sort((a: any, b: any) => (b.ranking_score || 0) - (a.ranking_score || 0))
+              .slice(0, 2);
+            
+            if (topEvents.length > 0) {
+              fallbackNotifs = topEvents.map((ev: any, index: number) => {
+                const id = `notif-fallback-${ev.id || index}`;
+                return {
+                  id,
                   user_id: "demo-user",
                   type: "recommendation",
                   title: `🔥 Top Match: ${ev.title}`,
                   message: `A highly recommended ${ev.source || 'tech'} opportunity matches your profile!`,
-                  read: false,
+                  read: readIds.has(id),
                   created_at: new Date(Date.now() - (index * 3600000)).toISOString(),
                   event_id: ev.id,
-                }));
-              }
-            } catch {}
-          }
+                };
+              });
+            }
+          } catch {}
         }
+      }
 
-        return [
+      if (fallbackNotifs.length === 0) {
+        const id = "notif-welcome";
+        fallbackNotifs = [
           {
-            id: "notif-welcome",
+            id,
             user_id: "demo-user",
             type: "welcome",
             title: "Welcome to EventScout! 🚀",
             message: "Explore hackathons and tech events matched directly to your profile.",
-            read: false,
+            read: readIds.has(id),
             created_at: new Date().toISOString(),
             event_id: "devfolio-1",
           },
         ];
-      });
-      setUnreadCount((prev) => (prev > 0 ? prev : 2));
+      }
+
+      setNotifications(fallbackNotifs);
+      setUnreadCount(fallbackNotifs.filter(n => !n.read).length);
     }
   }, [apiUrl, token, isAuthenticated, showNotification]);
 
@@ -123,6 +142,17 @@ export default function NotificationBell() {
     );
     setUnreadCount((c) => Math.max(0, c - 1));
 
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("eventscout_read_notifications");
+        const readIds = cached ? JSON.parse(cached) : [];
+        if (!readIds.includes(id)) {
+          readIds.push(id);
+          localStorage.setItem("eventscout_read_notifications", JSON.stringify(readIds));
+        }
+      } catch {}
+    }
+
     try {
       await fetch(`${apiUrl}/notifications/${id}/read`, {
         method: "POST",
@@ -159,6 +189,15 @@ export default function NotificationBell() {
     // Optimistic UI update
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
+
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("eventscout_read_notifications");
+        const readIds = new Set<string>(cached ? JSON.parse(cached) : []);
+        notifications.forEach(n => readIds.add(n.id));
+        localStorage.setItem("eventscout_read_notifications", JSON.stringify(Array.from(readIds)));
+      } catch {}
+    }
 
     try {
       await fetch(`${apiUrl}/notifications/read-all`, {
