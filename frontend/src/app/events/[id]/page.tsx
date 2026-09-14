@@ -408,8 +408,14 @@ export default function EventDetailPage() {
         {activeTab === "about" && (
           <>
             <p className="whitespace-pre-line text-slate-300 leading-relaxed">
-              {event.description ||
-                "A flagship technical event bringing together passionate developers, students, and tech leaders to innovate and build real-world solutions."}
+              {event.description 
+                ? event.description
+                    .replace(/\*\*/g, "")
+                    .replace(/\*/g, "")
+                    .replace(/#/g, "")
+                    .replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1")
+                    .replace(/`/g, "")
+                : "A flagship technical event bringing together passionate developers, students, and tech leaders to innovate and build real-world solutions."}
             </p>
 
             {/* Structured Highlights */}
