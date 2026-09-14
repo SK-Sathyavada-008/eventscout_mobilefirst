@@ -16,7 +16,7 @@ export default function EventDetailPage() {
 
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"about" | "timeline" | "prizes" | "eligibility">("about");
+  const [activeTab, setActiveTab] = useState<"about" | "timeline" | "prizes">("about");
   const [copiedShare, setCopiedShare] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
 
@@ -388,7 +388,6 @@ export default function EventDetailPage() {
           { id: "about", label: "About" },
           { id: "timeline", label: "Timeline" },
           { id: "prizes", label: "Prizes" },
-          { id: "eligibility", label: "Eligibility" },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -484,16 +483,6 @@ export default function EventDetailPage() {
           </div>
         )}
 
-        {activeTab === "eligibility" && (
-          <div className="bg-[#131b2e] border border-slate-800 rounded-2xl p-5 space-y-3">
-            <div className="font-bold text-white text-sm">Participant Requirements</div>
-            <ul className="text-xs text-slate-400 space-y-2 list-disc list-inside">
-              <li>Open to college students, freshers, and working professionals.</li>
-              <li>Valid student ID or national ID may be required for campus verification.</li>
-              <li>Official registration through the provider portal is mandatory.</li>
-            </ul>
-          </div>
-        )}
       </div>
 
       {/* Sticky Bottom CTA matching Screen 4 */}
