@@ -70,7 +70,7 @@ function SavedEventsContent() {
       if (fbRes.ok) {
         const all: Event[] = await fbRes.json();
         const matched = all.filter((e) => e.id && userSavedIds.has(e.id));
-        setSavedEvents(matched.length > 0 ? matched : all.slice(0, 3)); // demo items if empty
+        setSavedEvents(matched); // Only show actually saved events
       }
     } catch (err) {
       console.warn("Using offline cached saved events:", err);

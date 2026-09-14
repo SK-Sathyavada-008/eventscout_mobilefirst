@@ -44,7 +44,32 @@ export default function NotificationBell() {
     } catch (err) {
       console.warn("API notifications unreachable, using fallback notifications:", err);
       setNotifications((prev) => {
-        if (prev.length > 0) return prev;
+        // Try to generate dynamic notifications from cached events
+        if (typeof window !== "undefined") {
+          const cached = localStorage.getItem("eventscout_cached_events");
+          if (cached) {
+            try {
+              const allEvents = JSON.parse(cached);
+              const topEvents = allEvents
+                .sort((a: any, b: any) => (b.ranking_score || 0) - (a.ranking_score || 0))
+                .slice(0, 2);
+              
+              if (topEvents.length > 0) {
+                return topEvents.map((ev: any, index: number) => ({
+                  id: `notif-fallback-${ev.id || index}`,
+                  user_id: "demo-user",
+                  type: "recommendation",
+                  title: `🔥 Top Match: ${ev.title}`,
+                  message: `A highly recommended ${ev.source || 'tech'} opportunity matches your profile!`,
+                  read: false,
+                  created_at: new Date(Date.now() - (index * 3600000)).toISOString(),
+                  event_id: ev.id,
+                }));
+              }
+            } catch {}
+          }
+        }
+
         return [
           {
             id: "notif-welcome",
@@ -55,16 +80,6 @@ export default function NotificationBell() {
             read: false,
             created_at: new Date().toISOString(),
             event_id: "devfolio-1",
-          },
-          {
-            id: "notif-match",
-            user_id: "demo-user",
-            type: "recommendation",
-            title: "Top Match: AI Genesis Hackathon 🔥",
-            message: "A new high-match opportunity in AI/ML is open for registration.",
-            read: false,
-            created_at: new Date(Date.now() - 3600000).toISOString(),
-            event_id: "mlh-1",
           },
         ];
       });
