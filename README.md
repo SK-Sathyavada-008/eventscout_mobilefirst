@@ -240,7 +240,7 @@ eventscout/
 
 ---
 
-## 📖 Architecture & Interview Guides
+## 📖 Architecture & Guides
 
 - **[System Architecture](docs/ARCHITECTURE.md)**: Deep dive into the data collection, normalization, and indexing pipeline.
 - **[Ranking Architecture](docs/RANKING_ARCHITECTURE.md)**: Mathematical scoring formulas, tier definitions, and explainability mechanisms.
