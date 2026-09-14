@@ -16,7 +16,7 @@ export default function EventDetailPage() {
 
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"about" | "timeline" | "prizes">("about");
+  const [activeTab, setActiveTab] = useState<"about" | "timeline">("about");
   const [copiedShare, setCopiedShare] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
 
@@ -387,7 +387,6 @@ export default function EventDetailPage() {
         {[
           { id: "about", label: "About" },
           { id: "timeline", label: "Timeline" },
-          { id: "prizes", label: "Prizes" },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -473,19 +472,6 @@ export default function EventDetailPage() {
                 <div className="text-xs text-slate-400">{formattedDate}</div>
               </div>
             </div>
-          </div>
-        )}
-
-        {activeTab === "prizes" && (
-          <div className="bg-[#131b2e] border border-slate-800 rounded-2xl p-5">
-            <div className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-              <span>🏆</span>
-              <span>Prizes & Perks</span>
-            </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Prizes, certificates, credits, and swag are provided directly by {event.organizer || "the host organization"}.
-              Check the official event page for complete prize pool details.
-            </p>
           </div>
         )}
 
