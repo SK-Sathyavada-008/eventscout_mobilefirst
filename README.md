@@ -244,7 +244,7 @@ eventscout/
 
 - **[System Architecture](docs/ARCHITECTURE.md)**: Deep dive into the data collection, normalization, and indexing pipeline.
 - **[Ranking Architecture](docs/RANKING_ARCHITECTURE.md)**: Mathematical scoring formulas, tier definitions, and explainability mechanisms.
-- **[Interview Demo Guide](docs/DEMO_GUIDE.md)**: Step-by-step scripts to demonstrate multi-source collection, autonomous discovery, ranking, extension clipping, and admin monitoring.
+- **[Demo Guide](docs/DEMO_GUIDE.md)**: Step-by-step scripts to demonstrate multi-source collection, autonomous discovery, ranking, extension clipping, and admin monitoring.
 - **[Production Deployment](docs/DEPLOYMENT.md)**: Docker Compose and PaaS deployment instructions.
 
 ---
