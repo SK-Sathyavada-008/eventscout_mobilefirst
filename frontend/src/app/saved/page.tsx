@@ -26,18 +26,22 @@ function SavedEventsContent() {
     setLoading(true);
     try {
       if (token && !token.startsWith("demo-token-")) {
-        const res = await fetch(`${apiUrl}/events/saved`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data: Event[] = await res.json();
-          setSavedEvents(data);
-          // Cache in local storage for offline
-          if (typeof window !== "undefined") {
-            localStorage.setItem("eventscout_cached_saved_events", JSON.stringify(data));
+        try {
+          const res = await fetch(`${apiUrl}/events/saved`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const data: Event[] = await res.json();
+            setSavedEvents(data);
+            // Cache in local storage for offline
+            if (typeof window !== "undefined") {
+              localStorage.setItem("eventscout_cached_saved_events", JSON.stringify(data));
+            }
+            setLoading(false);
+            return;
           }
-          setLoading(false);
-          return;
+        } catch (apiErr) {
+          console.warn("API unreachable, trying fallback:", apiErr);
         }
       }
 

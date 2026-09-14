@@ -126,10 +126,16 @@ function ExploreContent() {
         selectedCategoryChip !== "Hackathons" &&
         selectedCategoryChip !== "Workshops"
       ) {
-        const match = ev.categories?.some(
-          (c) => c.toLowerCase() === selectedCategoryChip.toLowerCase()
-        );
-        if (!match) return false;
+        if (selectedCategoryChip === "Conferences") {
+          const isConf = ev.title?.toLowerCase().includes('conference') || 
+                         ev.categories?.some(c => c.toLowerCase().includes('conference') || c.toLowerCase().includes('meetup'));
+          if (!isConf) return false;
+        } else {
+          const match = ev.categories?.some(
+            (c) => c.toLowerCase() === selectedCategoryChip.toLowerCase()
+          );
+          if (!match) return false;
+        }
       }
 
       // Mode filter

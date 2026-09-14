@@ -67,17 +67,21 @@ export default function EventDetailPage() {
         }
 
         // 2. Fetch from API
-        const headers: Record<string, string> = {};
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-        const res = await fetch(`${apiUrl}/events`, { headers });
-        if (res.ok) {
-          const list: Event[] = await res.json();
-          const found = list.find(isMatch);
-          if (found) {
-            setEvent(found);
-            setLoading(false);
-            return;
+        try {
+          const headers: Record<string, string> = {};
+          if (token) headers["Authorization"] = `Bearer ${token}`;
+          const res = await fetch(`${apiUrl}/events`, { headers });
+          if (res.ok) {
+            const list: Event[] = await res.json();
+            const found = list.find(isMatch);
+            if (found) {
+              setEvent(found);
+              setLoading(false);
+              return;
+            }
           }
+        } catch (apiErr) {
+          console.warn("API unreachable, trying fallback:", apiErr);
         }
 
         // 3. Fallback file

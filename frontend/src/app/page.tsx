@@ -146,14 +146,25 @@ export default function DiscoverPage() {
     [apiUrl, token, user, refreshUser, updateUser, router]
   );
 
-  // Filtered by Search & Category
-  const filteredEvents = useMemo(() => {
+  // Filter by Category first
+  const categoryFilteredEvents = useMemo(() => {
     return events.filter((ev) => {
       if (activeCategory === "hackathons" && !isHackathon(ev)) return false;
       if (activeCategory === "workshops" && !isWorkshop(ev)) return false;
+      if (activeCategory === "conferences") {
+        const isConf = ev.title?.toLowerCase().includes('conference') || 
+                       ev.categories?.some(c => c.toLowerCase().includes('conference') || c.toLowerCase().includes('meetup'));
+        if (!isConf) return false;
+      }
+      return true;
+    });
+  }, [events, activeCategory]);
 
-      if (!searchQuery.trim()) return true;
-      const q = searchQuery.toLowerCase().trim();
+  // Filtered by Search
+  const filteredEvents = useMemo(() => {
+    if (!searchQuery.trim()) return categoryFilteredEvents;
+    const q = searchQuery.toLowerCase().trim();
+    return categoryFilteredEvents.filter((ev) => {
       return (
         ev.title?.toLowerCase().includes(q) ||
         ev.organizer?.toLowerCase().includes(q) ||
@@ -161,12 +172,12 @@ export default function DiscoverPage() {
         ev.source?.toLowerCase().includes(q)
       );
     });
-  }, [events, activeCategory, searchQuery]);
+  }, [categoryFilteredEvents, searchQuery]);
 
   // Happening This Week / Urgent
   const happeningThisWeek = useMemo(() => {
     const now = new Date();
-    const urgent = events.filter((ev) => {
+    const urgent = categoryFilteredEvents.filter((ev) => {
       try {
         const dt = new Date(ev.date_time);
         const diffDays = (dt.getTime() - now.getTime()) / (1000 * 3600 * 24);
@@ -177,17 +188,17 @@ export default function DiscoverPage() {
     });
     // Fallback to top picks if no events this week
     if (urgent.length === 0) {
-      return events.slice(0, 5);
+      return categoryFilteredEvents.slice(0, 5);
     }
     return urgent.slice(0, 6);
-  }, [events]);
+  }, [categoryFilteredEvents]);
 
   // Recommended for You (Intelligent ranking scores)
   const recommendedEvents = useMemo(() => {
-    return [...events]
+    return [...categoryFilteredEvents]
       .sort((a, b) => (b.ranking_score || 0) - (a.ranking_score || 0))
       .slice(0, 8);
-  }, [events]);
+  }, [categoryFilteredEvents]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-6">
