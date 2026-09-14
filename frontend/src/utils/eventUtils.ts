@@ -1,6 +1,6 @@
 import { Event } from "@/types/event";
 
-export type EventSectionType = "all" | "hackathons" | "workshops";
+export type EventSectionType = "all" | "hackathons" | "workshops" | "conferences";
 
 export type EventClassification = "hackathon" | "workshop" | "meetup";
 
