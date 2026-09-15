@@ -47,6 +47,10 @@ self.addEventListener("fetch", (event) => {
   // Only handle GET requests
   if (request.method !== "GET") return;
 
+  // Only handle same-origin requests in the service worker shell cache.
+  // Cross-origin backend API calls (e.g. port 8000) are handled directly by the browser to avoid CORS issues.
+  if (url.origin !== self.location.origin) return;
+
   // Do NOT cache authentication or user-private endpoints
   if (
     url.pathname.includes("/auth") ||

@@ -55,6 +55,7 @@ class TestEventsAPI(unittest.TestCase):
             "source_event_id": "101",
         }
         mock_db.get_upcoming_events.return_value = [mock_event]
+        mock_db.query_events.return_value = [mock_event]
 
         response = self.client.get("/events")
         self.assertEqual(response.status_code, 200)

@@ -71,7 +71,7 @@ export default function DiscoverPage() {
         }
       } catch (err) {
         console.warn("API unreachable, falling back to local cache:", err);
-        // Try local storage cache first
+        // 1. Try local storage cache first
         if (typeof window !== "undefined") {
           const cached = localStorage.getItem("eventscout_cached_events");
           if (cached) {
@@ -84,6 +84,21 @@ export default function DiscoverPage() {
             } catch {}
           }
         }
+
+        // 2. Try pre-bundled fallback_events.json
+        try {
+          const fallbackRes = await fetch("/fallback_events.json");
+          if (fallbackRes.ok) {
+            const fallbackData = await fallbackRes.json();
+            if (Array.isArray(fallbackData) && fallbackData.length > 0) {
+              setEvents(fallbackData);
+              setError(null);
+              setIsOffline(true);
+              setLoading(false);
+              return;
+            }
+          }
+        } catch {}
 
         setError("Unable to load events. Make sure EventScout backend is active.");
       } finally {

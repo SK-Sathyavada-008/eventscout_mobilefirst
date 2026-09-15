@@ -22,12 +22,20 @@ app = FastAPI(
     version="2.0.0",
 )
 
-# Configure CORS for local development frontend and extension
+# Configure CORS for local development frontend, installed PWA, and extension
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ],
+    allow_origin_regex=r"^(https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:[0-9]+)?|chrome-extension://.*)$",
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
 )
 
@@ -160,4 +168,10 @@ async def save_event_from_extension(
         "saved_for_user": saved_for_user,
         "metrics": metrics,
     }
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("api.main:app", host="0.0.0.0", port=8000, reload=True)
 

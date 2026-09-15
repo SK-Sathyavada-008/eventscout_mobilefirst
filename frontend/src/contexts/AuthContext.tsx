@@ -81,8 +81,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const apiFetch = async (path: string, init?: RequestInit): Promise<Response> => {
+    try {
+      return await fetch(`${API_URL}${path}`, init);
+    } catch (err) {
+      if (API_URL.includes("localhost")) {
+        const fallback = API_URL.replace("localhost", "127.0.0.1");
+        try {
+          return await fetch(`${fallback}${path}`, init);
+        } catch {}
+      } else if (API_URL.includes("127.0.0.1")) {
+        const fallback = API_URL.replace("127.0.0.1", "localhost");
+        try {
+          return await fetch(`${fallback}${path}`, init);
+        } catch {}
+      }
+      throw err;
+    }
+  };
+
   const fetchMe = async (jwt: string): Promise<User> => {
-    const res = await fetch(`${API_URL}/auth/me`, {
+    const res = await apiFetch(`/auth/me`, {
       headers: { Authorization: `Bearer ${jwt}` },
     });
     if (!res.ok) throw new Error("Unauthorized");
@@ -92,12 +111,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (identifier: string, password: string) => {
     const isEmail = identifier.includes("@");
     const cleanId = identifier.trim();
-    const payload = isEmail
-      ? { email: cleanId, password }
-      : { username: cleanId, password };
+    const payload = {
+      identifier: cleanId,
+      email: isEmail ? cleanId : undefined,
+      username: !isEmail ? cleanId : undefined,
+      password,
+    };
 
     try {
-      const res = await fetch(`${API_URL}/auth/login`, {
+      const res = await apiFetch(`/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -124,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!isNetworkError) {
         throw err;
       }
-      throw new Error("Unable to connect to EventScout backend. Please try again later.");
+      throw new Error("Unable to connect to EventScout backend. Please ensure the backend server is running.");
     }
   }, []);
 
@@ -134,7 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const cleanEmail = email.trim();
 
       try {
-        const res = await fetch(`${API_URL}/auth/signup`, {
+        const res = await apiFetch(`/auth/signup`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -162,11 +184,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           err.message.includes("Load failed") ||
           err.name === "TypeError";
 
-      if (!isNetworkError) {
-        throw err;
+        if (!isNetworkError) {
+          throw err;
+        }
+        throw new Error("Unable to connect to EventScout backend. Please ensure the backend server is running.");
       }
-      throw new Error("Unable to connect to EventScout backend. Please try again later.");
-    }
     },
     []
   );

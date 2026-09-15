@@ -73,12 +73,19 @@ class RegisterRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
+    identifier: Optional[str] = None
     email: Optional[str] = None
     username: Optional[str] = None
     password: str
 
     @model_validator(mode="after")
     def check_credentials(self) -> "LoginRequest":
+        if self.identifier:
+            cleaned = self.identifier.strip()
+            if "@" in cleaned and not self.email:
+                self.email = cleaned
+            elif not self.username:
+                self.username = cleaned
         if not self.email and not self.username:
             raise ValueError("Email or username is required.")
         return self
@@ -205,7 +212,7 @@ async def login(body: LoginRequest) -> AuthResponse:
     from eventscout.utils.logging_config import structured_logger
 
     db = UserDatabase()
-    identifier = body.email or body.username or ""
+    identifier = body.email or body.username or body.identifier or ""
     user_doc = db.find_by_identifier(identifier)
 
     invalid_creds_exc = HTTPException(
