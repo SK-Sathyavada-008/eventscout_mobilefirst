@@ -7,3 +7,5 @@ node_modules/
 data/sent_emails/
 .pytest_cache/
 
+
+.vercel
