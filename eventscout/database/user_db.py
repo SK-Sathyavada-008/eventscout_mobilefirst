@@ -11,6 +11,7 @@ Manages the 'users' collection with:
 
 import logging
 import os
+import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
@@ -136,9 +137,10 @@ class UserDatabase:
         return doc
 
     def find_by_username(self, username: str) -> Optional[Dict[str, Any]]:
-        """Find a user by username."""
+        """Find a user by username (case-insensitive)."""
         col = self.get_collection()
-        doc = col.find_one({"username": username.strip()})
+        cleaned = username.strip()
+        doc = col.find_one({"username": {"$regex": f"^{re.escape(cleaned)}$", "$options": "i"}})
         if doc:
             doc["id"] = str(doc["_id"])
             doc["_id"] = str(doc["_id"])

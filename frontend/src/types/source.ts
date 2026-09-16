@@ -32,6 +32,10 @@ export interface Source {
   consecutive_failures?: number;
   events_found_last_run?: number;
   created_by?: string;
+  submitted_by_id?: string;
+  submitted_by_name?: string;
+  submitted_by_email?: string;
+  submission_notes?: string;
   created_at: string;
   updated_at: string;
 }

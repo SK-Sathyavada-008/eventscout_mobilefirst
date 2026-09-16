@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import PWAInstallModal from "@/components/PWAInstallModal";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
+import SuggestSourceModal from "@/components/SuggestSourceModal";
 
 function ProfileContent() {
   const { user, token, isAuthenticated, isLoading: authLoading, logout, updateUser } = useAuth();
@@ -13,6 +14,9 @@ function ProfileContent() {
   const { isInstallable } = usePWAInstall();
 
   const [showPWAInstall, setShowPWAInstall] = useState(false);
+  const [showSuggestModal, setShowSuggestModal] = useState(false);
+  const [mySubmissions, setMySubmissions] = useState<any[]>([]);
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [showEditUsername, setShowEditUsername] = useState(false);
   const [usernameInput, setUsernameInput] = useState("");
   const [savingUsername, setSavingUsername] = useState(false);
@@ -20,12 +24,32 @@ function ProfileContent() {
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+  const fetchMySubmissions = async () => {
+    if (!token) return;
+    try {
+      setLoadingSubmissions(true);
+      const res = await fetch(`${apiUrl}/api/sources/my-submissions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMySubmissions(data);
+      }
+    } catch (err) {
+      console.error("Failed to load user submissions", err);
+    } finally {
+      setLoadingSubmissions(false);
+    }
+  };
+
   // Redirect if unauthenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push("/login?redirect=/profile");
+    } else if (token) {
+      fetchMySubmissions();
     }
-  }, [authLoading, isAuthenticated, router]);
+  }, [authLoading, isAuthenticated, router, token]);
 
   useEffect(() => {
     if (user) {
@@ -241,6 +265,27 @@ function ProfileContent() {
           <span className="text-slate-500 group-hover:text-slate-300 text-sm">›</span>
         </button>
 
+        {/* Suggest Event Website */}
+        <button
+          onClick={() => setShowSuggestModal(true)}
+          className="w-full flex items-center justify-between p-4 sm:p-4.5 hover:bg-slate-800/50 transition-colors active-press group text-left"
+        >
+          <div className="flex items-center gap-3.5">
+            <span className="w-9 h-9 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center text-base flex-shrink-0">
+              🌐
+            </span>
+            <div>
+              <span className="text-sm font-bold text-white group-hover:text-indigo-300">
+                Suggest Event Website
+              </span>
+              <span className="block text-[10px] text-slate-400">
+                Submit a website for admin review & approval
+              </span>
+            </div>
+          </div>
+          <span className="text-xs font-bold text-indigo-400 group-hover:text-indigo-300">➕ Add</span>
+        </button>
+
         {/* About EventScout / Onboarding Replay */}
         <Link
           href="/onboarding"
@@ -258,6 +303,90 @@ function ProfileContent() {
         </Link>
       </div>
 
+      {/* User Submitted Websites Section */}
+      <div className="mb-6 bg-[#131b2e] rounded-2xl border border-slate-800 p-4 sm:p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-base">📋</span>
+            <h3 className="text-sm font-bold text-white">My Suggested Websites</h3>
+          </div>
+          <button
+            onClick={() => setShowSuggestModal(true)}
+            className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1"
+          >
+            <span>➕</span>
+            <span>Suggest URL</span>
+          </button>
+        </div>
+
+        <p className="text-[11px] text-slate-400 mb-3 leading-relaxed">
+          Links you submit are reviewed by an administrator. Once approved, the website will be added to EventScout&apos;s active scrapers.
+        </p>
+
+        {loadingSubmissions ? (
+          <div className="py-4 text-center text-xs text-slate-400 animate-pulse">
+            Loading your submissions...
+          </div>
+        ) : mySubmissions.length === 0 ? (
+          <div className="py-5 text-center rounded-xl bg-slate-900/50 border border-slate-800/60 p-4">
+            <p className="text-xs text-slate-400 mb-2">You haven&apos;t suggested any website URLs yet.</p>
+            <button
+              onClick={() => setShowSuggestModal(true)}
+              className="px-3 py-1.5 rounded-lg bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 text-xs font-semibold hover:bg-indigo-600/30 transition-all"
+            >
+              Suggest an Event Website
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {mySubmissions.map((sub) => {
+              const isApproved = sub.status === "ENABLED";
+              const isPending = sub.status === "PENDING" || sub.status === "READY_FOR_REVIEW" || sub.status === "DISCOVERING" || sub.status === "TESTING";
+              const isRejected = sub.status === "FAILED" || sub.status === "DISABLED";
+
+              return (
+                <div
+                  key={sub.id || sub._id}
+                  className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between gap-3 text-xs"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-white truncate">
+                      {sub.name || "Event Website"}
+                    </p>
+                    <a
+                      href={sub.url || sub.base_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[11px] text-indigo-400 hover:underline truncate block"
+                    >
+                      {sub.url || sub.base_url}
+                    </a>
+                  </div>
+
+                  <div>
+                    {isApproved && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                        ✓ Approved & Active
+                      </span>
+                    )}
+                    {isPending && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                        ⏳ Pending Admin Review
+                      </span>
+                    )}
+                    {isRejected && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">
+                        ✕ Under Review / Declined
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Logout Button */}
       <button
         onClick={handleLogout}
@@ -271,6 +400,13 @@ function ProfileContent() {
       <PWAInstallModal
         isOpen={showPWAInstall}
         onClose={() => setShowPWAInstall(false)}
+      />
+
+      {/* Suggest Source Modal */}
+      <SuggestSourceModal
+        isOpen={showSuggestModal}
+        onClose={() => setShowSuggestModal(false)}
+        onSubmitted={fetchMySubmissions}
       />
     </div>
   );

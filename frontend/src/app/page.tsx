@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { isHackathon, isWorkshop, EventSectionType } from "@/utils/eventUtils";
 import PWAInstallModal from "@/components/PWAInstallModal";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
+import SuggestSourceModal from "@/components/SuggestSourceModal";
 
 export default function DiscoverPage() {
   const router = useRouter();
@@ -28,6 +29,7 @@ export default function DiscoverPage() {
   // PWA install modal state
   const { isInstallable } = usePWAInstall();
   const [showPWAInstall, setShowPWAInstall] = useState(false);
+  const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
 
   // Sync saved event IDs with the authenticated user
   useEffect(() => {
@@ -410,6 +412,34 @@ export default function DiscoverPage() {
         </>
       )}
 
+      {/* Community Event Website Suggestion Banner */}
+      <div className="mb-8 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-indigo-950/40 via-[#131b2e] to-purple-950/40 border border-indigo-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-xl flex-shrink-0">
+            🌐
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-white flex items-center gap-2">
+              Know an event website or hackathon portal?
+              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                Community
+              </span>
+            </h4>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Suggest any site. Our admin reviews each submission and adds it upon approval.
+            </p>
+          </div>
+        </div>
+        <button
+          id="discover-suggest-url-btn"
+          onClick={() => setIsSuggestModalOpen(true)}
+          className="whitespace-nowrap px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-bold shadow-md shadow-indigo-600/25 transition-all flex items-center gap-1.5"
+        >
+          <span>➕</span>
+          <span>Suggest Website</span>
+        </button>
+      </div>
+
       {/* PWA Install banner for Android Chrome users */}
       {isInstallable && (
         <div className="mb-8 p-4 rounded-2xl bg-gradient-to-r from-indigo-950/80 via-slate-900 to-indigo-950/80 border border-indigo-500/30 flex items-center justify-between gap-3 shadow-lg">
@@ -434,6 +464,12 @@ export default function DiscoverPage() {
       <PWAInstallModal
         isOpen={showPWAInstall}
         onClose={() => setShowPWAInstall(false)}
+      />
+
+      {/* Suggest Source Modal */}
+      <SuggestSourceModal
+        isOpen={isSuggestModalOpen}
+        onClose={() => setIsSuggestModalOpen(false)}
       />
     </div>
   );

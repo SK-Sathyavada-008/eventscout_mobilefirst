@@ -85,3 +85,61 @@ async def mark_all_notifications_read(
     db = NotificationDatabase()
     marked = db.mark_all_read(user_id=current_user["id"])
     return {"success": True, "marked_read": marked}
+
+
+@router.get("/email-status", summary="Get outbound email configuration status")
+async def get_email_status(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """
+    Returns the current email delivery configuration status,
+    including SMTP configuration check and recipient email.
+    """
+    from eventscout.services.email_service import EmailService
+    service = EmailService()
+    smtp_diag = service.verify_smtp_connection()
+
+    return {
+        "user_email": current_user.get("email"),
+        "user_email_enabled": current_user.get("notification_preferences", {}).get("email_enabled", True),
+        "smtp": smtp_diag,
+    }
+
+
+@router.post("/send-digest", summary="Trigger immediate daily event digest for current user")
+async def send_user_digest(
+    force: bool = Query(True, description="Bypass same-day duplicate check"),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """
+    Builds and delivers a curated technical event digest for the authenticated user immediately.
+    """
+    from eventscout.services.email_service import EmailService
+    from eventscout.database.user_db import UserDatabase
+
+    user_db = UserDatabase()
+    user_doc = user_db.find_by_id(current_user["id"])
+    if not user_doc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User profile not found.")
+
+    service = EmailService()
+    result = service.send_digest_to_user(user_doc, force=force)
+    return result
+
+
+@router.post("/test-email", summary="Send a test verification email")
+async def send_test_email(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """
+    Sends a test verification email to confirm the user's notification delivery pipeline.
+    """
+    recipient = current_user.get("email")
+    if not recipient:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No email associated with current user.")
+
+    from eventscout.services.email_service import EmailService
+    service = EmailService()
+    result = service.send_test_email(recipient)
+    return result
+

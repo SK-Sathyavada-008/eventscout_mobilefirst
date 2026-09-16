@@ -8,11 +8,15 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 interface SuggestSourceModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSubmitted?: () => void;
 }
 
-export default function SuggestSourceModal({ isOpen, onClose }: SuggestSourceModalProps) {
-  const { token, isAuthenticated } = useAuth();
+export default function SuggestSourceModal({ isOpen, onClose, onSubmitted }: SuggestSourceModalProps) {
+  const { user, token } = useAuth();
   const [url, setUrl] = useState("");
+  const [name, setName] = useState("");
+  const [notes, setNotes] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -34,13 +38,27 @@ export default function SuggestSourceModal({ isOpen, onClose }: SuggestSourceMod
       setErrorMessage(null);
       setSuccessMessage(null);
 
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const payload: Record<string, any> = {
+        url: cleanUrl,
+        name: name.trim() || undefined,
+        notes: notes.trim() || undefined,
+      };
+
+      if (!token && guestEmail.trim()) {
+        payload.email = guestEmail.trim();
+      }
+
       const res = await fetch(`${API_URL}/api/sources/submit`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ url: cleanUrl }),
+        headers,
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -50,9 +68,14 @@ export default function SuggestSourceModal({ isOpen, onClose }: SuggestSourceMod
       }
 
       setSuccessMessage(
-        "Source submitted successfully. Our system will analyze it and an administrator will review it."
+        data.message ||
+        "Website URL submitted successfully! It has been routed to the administrator review queue and will only be activated after admin verification and approval."
       );
       setUrl("");
+      setName("");
+      setNotes("");
+      setGuestEmail("");
+      if (onSubmitted) onSubmitted();
     } catch (err: any) {
       if (
         !err.message ||
@@ -61,9 +84,13 @@ export default function SuggestSourceModal({ isOpen, onClose }: SuggestSourceMod
         err.name === "TypeError"
       ) {
         setSuccessMessage(
-          "Source submitted successfully. Our system will analyze it and an administrator will review it."
+          "Website URL submitted successfully! It has been routed to the administrator review queue and will only be activated after admin verification and approval."
         );
         setUrl("");
+        setName("");
+        setNotes("");
+        setGuestEmail("");
+        if (onSubmitted) onSubmitted();
       } else {
         setErrorMessage(err.message || "Something went wrong while submitting the source.");
       }
@@ -76,19 +103,27 @@ export default function SuggestSourceModal({ isOpen, onClose }: SuggestSourceMod
     setSuccessMessage(null);
     setErrorMessage(null);
     setUrl("");
+    setName("");
+    setNotes("");
+    setGuestEmail("");
     onClose();
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden transition-all">
+      <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-800 overflow-hidden transition-all">
         {/* Header */}
-        <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <span className="text-xl">🌐</span>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-              Add / Suggest Event Website URL
-            </h3>
+            <div>
+              <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">
+                Suggest Event Website
+              </h3>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                Submissions require Admin approval before being indexed
+              </p>
+            </div>
           </div>
           <button
             onClick={handleModalClose}
@@ -100,16 +135,22 @@ export default function SuggestSourceModal({ isOpen, onClose }: SuggestSourceMod
 
         {/* Content */}
         <div className="p-6 space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-            Know a website, community, or university that hosts tech events, conferences, or hackathons?
-            Submit its URL below. Our AI discovery agent will analyze the website structure, and an administrator will verify it for inclusion.
-          </p>
+          {/* Admin approval workflow notice */}
+          <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-xs flex items-start gap-2.5">
+            <span className="text-base leading-none mt-0.5">🛡️</span>
+            <div className="space-y-0.5">
+              <p className="font-semibold text-amber-900 dark:text-amber-200">Admin Approval Required</p>
+              <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed">
+                Submitted URLs are sent directly to the administrator dashboard for verification. The website will only be added to EventScout once an admin approves it.
+              </p>
+            </div>
+          </div>
 
           {successMessage ? (
             <div className="p-5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 space-y-3">
               <div className="flex items-center gap-2.5 font-semibold text-sm">
                 <span className="text-lg">✅</span>
-                <span>Submission Received</span>
+                <span>Sent to Administrator for Review</span>
               </div>
               <p className="text-xs leading-relaxed text-emerald-700 dark:text-emerald-400">
                 {successMessage}
@@ -122,21 +163,65 @@ export default function SuggestSourceModal({ isOpen, onClose }: SuggestSourceMod
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                  Website URL
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  Website URL <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="url"
-                  placeholder="https://example-new-events-site.com"
+                  placeholder="https://example.com/events or https://hackathon-site.org"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   disabled={isSubmitting}
                   required
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 text-gray-900 dark:text-gray-100 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                 />
               </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  Platform / Organization Name <span className="text-gray-400 font-normal">(Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g., TechGig, HackerEarth, University Club"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={isSubmitting}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  Notes or Event Details <span className="text-gray-400 font-normal">(Optional)</span>
+                </label>
+                <textarea
+                  placeholder="e.g., Has listing of upcoming college hackathons and web dev workshops"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  disabled={isSubmitting}
+                  rows={2}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none"
+                />
+              </div>
+
+              {!user && (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    Your Email <span className="text-gray-400 font-normal">(Optional - to receive status updates)</span>
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={guestEmail}
+                    onChange={(e) => setGuestEmail(e.target.value)}
+                    disabled={isSubmitting}
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                  />
+                </div>
+              )}
 
               {errorMessage && (
                 <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 text-xs">
@@ -149,25 +234,25 @@ export default function SuggestSourceModal({ isOpen, onClose }: SuggestSourceMod
                   type="button"
                   onClick={handleModalClose}
                   disabled={isSubmitting}
-                  className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-lg transition-colors"
+                  className="px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting || !url.trim()}
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-sm font-semibold shadow-md transition-all flex items-center gap-2"
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-md transition-all flex items-center gap-2"
                 >
                   {isSubmitting ? (
                     <>
-                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                      <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                       </svg>
-                      <span>Submitting...</span>
+                      <span>Sending to Admin...</span>
                     </>
                   ) : (
-                    <span>Submit Website</span>
+                    <span>Submit for Admin Approval</span>
                   )}
                 </button>
               </div>

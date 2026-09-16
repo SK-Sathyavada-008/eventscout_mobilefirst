@@ -508,7 +508,12 @@ export default function AdminSourcesPage() {
                         isReview ? "bg-blue-50/20 dark:bg-blue-950/10" : ""
                       }`}>
                         <td className="py-3.5 px-4 font-bold text-gray-900 dark:text-gray-100 whitespace-nowrap">
-                          {source.name}
+                          <span>{source.name}</span>
+                          {(source.submitted_by_name || source.submitted_by_email) && (
+                            <span className="block text-[10px] font-normal text-amber-600 dark:text-amber-400">
+                              👤 {source.submitted_by_name || source.submitted_by_email}
+                            </span>
+                          )}
                         </td>
                         <td className="py-3.5 px-4">
                           <a
@@ -645,6 +650,17 @@ export default function AdminSourcesPage() {
                 <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-0.5">
                   {selectedSource.event_list_url || selectedSource.base_url || selectedSource.url}
                 </p>
+                {(selectedSource.submitted_by_name || selectedSource.submitted_by_email) && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1 font-medium">
+                    <span>👤</span>
+                    <span>Submitted by: <strong>{selectedSource.submitted_by_name || "Community Member"}</strong> {selectedSource.submitted_by_email ? `(${selectedSource.submitted_by_email})` : ""}</span>
+                  </p>
+                )}
+                {selectedSource.submission_notes && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 italic">
+                    Note: &ldquo;{selectedSource.submission_notes}&rdquo;
+                  </p>
+                )}
               </div>
               <button
                 onClick={() => {

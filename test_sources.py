@@ -318,6 +318,12 @@ def test_scheduler_dynamic_enabled_sources_with_failure_isolation():
     mock_source_db = MagicMock()
     mock_event_db = MagicMock()
 
+    mock_event_db.upsert_events.return_value = {
+        "new_inserted": 1,
+        "existing_updated": 0,
+        "already_current": 0,
+        "new_events": [],
+    }
     mock_source_db.get_enabled_sources.return_value = [
         {"id": "src_broken", "name": "BrokenSite", "collection_strategy": "REST_API"},
         {"id": "src_working", "name": "WorkingSite", "collection_strategy": "HTML"},

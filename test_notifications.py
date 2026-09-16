@@ -212,33 +212,44 @@ class TestAutomationAndNotifications(unittest.TestCase):
     # ------------------------------------------------------------------
     # 5. Scraper Service & Scheduler Resilience
     # ------------------------------------------------------------------
-    @patch("eventscout.services.scraper_service.scrape_meetup_events")
-    def test_scraper_service_identifies_new_events(self, mock_scrape):
+    def test_scraper_service_identifies_new_events(self):
         """ScraperService forwards only newly inserted events to NotificationService."""
         mock_notif_service = MagicMock()
         mock_notif_service.dispatch_new_event_notifications.return_value = 1
+        mock_source_db = MagicMock()
+        mock_source_db.get_enabled_sources.return_value = [{"id": "s1", "name": "TestSource", "collection_strategy": "REST_API"}]
+        mock_event_db = MagicMock()
+        mock_event_db.upsert_events.return_value = {
+            "new_inserted": 1,
+            "existing_updated": 0,
+            "already_current": 0,
+            "new_events": [self.sample_event],
+        }
 
-        mock_scrape.return_value = (
-            [self.sample_event],
-            {
-                "new_inserted": 1,
-                "existing_updated": 0,
-                "already_current": 0,
-                "new_events": [self.sample_event],
-            },
-        )
+        mock_collector = MagicMock()
+        mock_collector.collect.return_value = [{
+            "title": "Autonomous AI Agents Workshop",
+            "url": "https://example.com/ai-agents",
+            "date": "2026-10-15T18:00:00+00:00",
+            "categories": ["AI / ML"],
+        }]
 
-        service = ScraperService(notification_service=mock_notif_service)
-        summary = service.run_pipeline()
+        with patch("eventscout.services.scraper_service.get_collector_for_source", return_value=mock_collector):
+            service = ScraperService(
+                notification_service=mock_notif_service,
+                source_db=mock_source_db,
+                event_db=mock_event_db,
+            )
+            summary = service.run_pipeline(max_pages=1)
 
         self.assertEqual(summary["new_inserted"], 1)
         self.assertEqual(summary["notifications_dispatched"], 1)
         mock_notif_service.dispatch_new_event_notifications.assert_called_once_with([self.sample_event])
 
-    @patch("eventscout.services.scraper_service.scrape_meetup_events")
-    def test_scheduler_handles_scraper_failure_cleanly(self, mock_scrape):
+    @patch.object(ScraperService, "run_pipeline")
+    def test_scheduler_handles_scraper_failure_cleanly(self, mock_pipeline):
         """Scheduler handles scraping error without crashing the application."""
-        mock_scrape.side_effect = RuntimeError("Playwright connection failed")
+        mock_pipeline.side_effect = RuntimeError("Playwright connection failed")
 
         scheduler = EventScoutScheduler()
         # Should not raise exception
@@ -283,6 +294,62 @@ class TestAutomationAndNotifications(unittest.TestCase):
         self.assertIn("notification_preferences", data)
         self.assertFalse(data["notification_preferences"]["browser_enabled"])
 
+    # ------------------------------------------------------------------
+    # 7. Email Digest & On-Demand Dispatch Endpoints
+    # ------------------------------------------------------------------
+    @patch("eventscout.services.email_service.EmailService.verify_smtp_connection")
+    def test_email_status_endpoint(self, mock_verify):
+        """GET /notifications/email-status returns user preferences and SMTP diagnosis."""
+        mock_verify.return_value = {
+            "configured": False,
+            "status": "warning",
+            "message": "Preview mode",
+            "host": "",
+            "port": 587,
+        }
+        res = self.client.get("/notifications/email-status", headers={"Authorization": f"Bearer {self.token_a}"})
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["user_email"], "alice@example.com")
+        self.assertIn("smtp", data)
+
+    @patch("eventscout.services.email_service.EmailService.send_digest_to_user")
+    @patch("eventscout.database.user_db.UserDatabase.find_by_id")
+    def test_send_digest_endpoint(self, mock_find, mock_send):
+        """POST /notifications/send-digest triggers immediate digest for authenticated user."""
+        mock_find.return_value = {
+            "id": self.user_a_id,
+            "email": "alice@example.com",
+            "interests": ["AI / ML"],
+        }
+        mock_send.return_value = {
+            "success": True,
+            "email": "alice@example.com",
+            "event_count": 5,
+            "mode": "fallback_snapshot",
+            "date": "2026-10-15",
+        }
+        res = self.client.post("/notifications/send-digest?force=true", headers={"Authorization": f"Bearer {self.token_a}"})
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["success"])
+        self.assertEqual(data["event_count"], 5)
+
+    @patch("eventscout.services.email_service.EmailService.send_test_email")
+    def test_send_test_email_endpoint(self, mock_test):
+        """POST /notifications/test-email sends test email to user."""
+        mock_test.return_value = {
+            "success": True,
+            "to_email": "alice@example.com",
+            "smtp_configured": False,
+            "mode": "fallback_snapshot",
+        }
+        res = self.client.post("/notifications/test-email", headers={"Authorization": f"Bearer {self.token_a}"})
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["success"])
+
 
 if __name__ == "__main__":
     unittest.main()
+

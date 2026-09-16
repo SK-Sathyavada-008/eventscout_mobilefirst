@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException, Query, Depends, status
@@ -16,10 +17,36 @@ from api.routers import sources as sources_router
 
 logger = logging.getLogger("EventScoutAPI")
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Manages API startup and shutdown tasks, including background scheduler.
+    """
+    scheduler = None
+    try:
+        from eventscout.scheduler import EventScoutScheduler
+        scheduler = EventScoutScheduler()
+        scheduler.start(blocking=False)
+        logger.info("Background EventScoutScheduler started with API lifespan.")
+    except Exception as e:
+        logger.warning("Could not auto-start EventScoutScheduler: %s", e)
+
+    yield
+
+    if scheduler:
+        try:
+            scheduler.stop()
+            logger.info("Background EventScoutScheduler stopped cleanly.")
+        except Exception:
+            pass
+
+
 app = FastAPI(
     title="EventScout API",
     description="API to serve technical events from MongoDB for the EventScout platform.",
     version="2.0.0",
+    lifespan=lifespan,
 )
 
 # Configure CORS for local development frontend, installed PWA, and extension

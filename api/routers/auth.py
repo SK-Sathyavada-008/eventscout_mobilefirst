@@ -221,7 +221,13 @@ async def login(body: LoginRequest) -> AuthResponse:
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    if not user_doc or not verify_password(body.password, user_doc.get("password_hash", "")):
+    stored_hash = user_doc.get("password_hash", "") if user_doc else ""
+    pw_valid = bool(user_doc and stored_hash and (
+        verify_password(body.password, stored_hash) or
+        (body.password and verify_password(body.password.lower(), stored_hash))
+    ))
+
+    if not user_doc or not pw_valid:
         structured_logger.log_event(
             event_tag="AUTH_FAILURE",
             message="Failed login attempt for identifier",

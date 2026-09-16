@@ -14,7 +14,7 @@ from bson import ObjectId
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel, field_validator
 
-from api.auth import get_current_user, get_current_admin_user
+from api.auth import get_current_user, get_current_admin_user, get_optional_current_user
 from eventscout.collectors.factory import get_collector_for_source
 from eventscout.database.source_db import SourceDatabase, normalize_source_url
 from eventscout.processors.normalizer import EventNormalizer
@@ -30,6 +30,9 @@ router = APIRouter(prefix="/api/sources", tags=["Sources"])
 
 class SubmitSourceRequest(BaseModel):
     url: str
+    name: Optional[str] = None
+    notes: Optional[str] = None
+    email: Optional[str] = None
 
     @field_validator("url")
     @classmethod
@@ -88,12 +91,12 @@ def _run_background_discovery(source_id: str, url: str) -> None:
 def submit_source(
     req: SubmitSourceRequest,
     background_tasks: BackgroundTasks,
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
 ):
     """
-    Normal authenticated user submits a website URL for inclusion in EventScout.
+    Normal user or visitor submits a website URL for inclusion in EventScout.
     Enforces SSRF validation and duplicate detection.
-    Stores source as PENDING and automatically dispatches the Gemini Discovery Agent.
+    Stores source as PENDING with enabled=False until reviewed and approved by an admin.
     """
     db = SourceDatabase()
     url = req.url.strip()
@@ -106,27 +109,69 @@ def submit_source(
             detail=f"This website is already registered in EventScout (Name: '{existing.get('name')}', Status: {existing.get('status')}).",
         )
 
+    # Determine submitter details
+    user_id = current_user.get("id") if current_user else "anonymous"
+    user_email = current_user.get("email") if current_user else req.email
+    user_name = current_user.get("username") if current_user else (req.email.split("@")[0] if req.email else "Community Member")
+
     # Create in PENDING state
     parsed = urlparse(url)
-    default_name = (parsed.netloc or url).replace("www.", "").split(".")[0].capitalize()
+    default_name = (req.name or "").strip() or (parsed.netloc or url).replace("www.", "").split(".")[0].capitalize()
 
     new_source = db.create_source(
         url=url,
         name=default_name,
         status="PENDING",
-        created_by=current_user.get("id", "user"),
+        created_by=user_id,
     )
     source_id = new_source["id"]
+
+    # Explicitly ensure disabled and store submitter metadata
+    db.update_source(source_id, {
+        "enabled": False,
+        "submitted_by_id": user_id,
+        "submitted_by_email": user_email,
+        "submitted_by_name": user_name,
+        "submission_notes": (req.notes or "").strip(),
+        "status": "PENDING",
+    })
 
     # Trigger Gemini Discovery in background
     background_tasks.add_task(_run_background_discovery, source_id, url)
 
     return {
-        "message": "Source submitted successfully. Our system will analyze it and an administrator will review it.",
+        "message": "Website URL submitted successfully! It has been routed to the administrator review queue and will only be activated after admin verification and approval.",
         "source_id": source_id,
         "name": default_name,
         "status": "PENDING",
     }
+
+
+@router.get("/my-submissions", response_model=List[Dict[str, Any]])
+def get_my_submissions(current_user: Dict[str, Any] = Depends(get_current_user)):
+    """
+    Returns all event website URLs submitted by the currently authenticated user,
+    with their review and approval statuses (PENDING, READY_FOR_REVIEW, ENABLED, REJECTED).
+    """
+    db = SourceDatabase()
+    col = db.get_collection()
+    user_id = current_user.get("id")
+    user_email = current_user.get("email")
+
+    query = {
+        "$or": [
+            {"created_by": user_id},
+            {"submitted_by_id": user_id},
+            {"submitted_by_email": user_email},
+        ]
+    }
+    cursor = col.find(query).sort("created_at", -1)
+    results = []
+    for doc in cursor:
+        doc["id"] = str(doc.get("_id", doc.get("id", "")))
+        doc["_id"] = str(doc.get("_id", ""))
+        results.append(doc)
+    return results
 
 
 # ------------------------------------------------------------------

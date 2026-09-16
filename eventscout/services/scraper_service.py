@@ -22,6 +22,7 @@ from eventscout.models.event import Event
 from eventscout.processors.deduplicator import EventDeduplicator
 from eventscout.processors.normalizer import EventNormalizer
 from eventscout.scrapers.meetup_scraper import scrape_meetup_events
+from eventscout.services.email_service import EmailService
 from eventscout.services.notification_service import NotificationService
 from eventscout.utils.logging_config import structured_logger
 
@@ -36,10 +37,12 @@ class ScraperService:
     def __init__(
         self,
         notification_service: Optional[NotificationService] = None,
+        email_service: Optional[EmailService] = None,
         source_db: Optional[SourceDatabase] = None,
         event_db: Optional[EventDatabase] = None,
     ):
         self.notification_service = notification_service or NotificationService()
+        self.email_service = email_service or EmailService()
         self.source_db = source_db or SourceDatabase()
         self.event_db = event_db or EventDatabase()
         self.normalizer = EventNormalizer()
@@ -171,14 +174,20 @@ class ScraperService:
                     errors=str(source_err)
                 )
 
-        # Dispatch notifications for newly discovered events
+        # Dispatch notifications & once-a-day instant email alerts for newly discovered events
         notifs_dispatched = 0
+        emails_dispatched = 0
         if all_new_events:
             logger.info("Found %d newly discovered events across all sources. Dispatching notifications...", len(all_new_events))
             try:
                 notifs_dispatched = self.notification_service.dispatch_new_event_notifications(all_new_events)
             except Exception as notif_err:
-                logger.error("Error dispatching notifications: %s", notif_err)
+                logger.error("Error dispatching in-app notifications: %s", notif_err)
+
+            try:
+                emails_dispatched = self.email_service.dispatch_daily_event_alerts(all_new_events)
+            except Exception as email_err:
+                logger.error("Error dispatching instant daily email alerts: %s", email_err)
         else:
             logger.info("No newly discovered events in this cycle. Skipping notification dispatch.")
 
@@ -188,6 +197,7 @@ class ScraperService:
             "existing_updated": total_updated_count,
             "already_current": total_current_count,
             "notifications_dispatched": notifs_dispatched,
+            "emails_dispatched": emails_dispatched,
             "dynamic_sources_executed": len(enabled_sources),
         }
         return summary
