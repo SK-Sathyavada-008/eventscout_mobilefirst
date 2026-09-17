@@ -9,3 +9,4 @@ data/sent_emails/
 
 
 .vercel
+cloudflared.exe
