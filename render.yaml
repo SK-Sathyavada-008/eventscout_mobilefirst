@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: eventscout-api
+    runtime: python
+    buildCommand: "pip install -r requirements.txt && playwright install chromium"
+    startCommand: "uvicorn api.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: MONGODB_DATABASE
+        value: eventscout
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: JWT_EXPIRE_DAYS
+        value: "7"
+      - key: DEV_USER_USERNAME
+        value: sk
+      - key: DEV_USER_PASSWORD
+        value: krishna
