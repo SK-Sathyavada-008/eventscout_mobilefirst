@@ -1,0 +1,14 @@
+.git
+.gitignore
+.vercel
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+tests
+frontend
+cloudflared.exe
+.env
+.env.local
+*.log
