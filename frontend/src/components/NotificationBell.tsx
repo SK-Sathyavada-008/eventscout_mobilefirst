@@ -17,15 +17,32 @@ export default function NotificationBell() {
   const prevUnreadRef = useRef<number>(0);
   const panelRef = useRef<HTMLDivElement>(null);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  // Track if the API is reachable to avoid repeated failing polls
+  const apiReachableRef = useRef<boolean>(true);
+  const fallbackLoadedRef = useRef<boolean>(false);
+  const showNotificationRef = useRef(showNotification);
+  useEffect(() => { showNotificationRef.current = showNotification; }, [showNotification]);
 
   // Fetch notifications from FastAPI backend
   const fetchNotifications = useCallback(async () => {
     if (!token || !isAuthenticated) return;
+
+    // If API was already found unreachable, skip polling (avoid console spam)
+    if (!apiReachableRef.current) return;
+
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(`${apiUrl}/notifications?limit=25`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
       if (!res.ok) return;
+
+      // API is reachable — reset flag
+      apiReachableRef.current = true;
+      fallbackLoadedRef.current = false;
 
       const data: NotificationsResponse = await res.json();
       setNotifications(data.notifications);
@@ -35,15 +52,21 @@ export default function NotificationBell() {
       if (data.unread_count > prevUnreadRef.current && prevUnreadRef.current !== 0) {
         const newest = data.notifications[0];
         if (newest && !newest.read) {
-          showNotification(newest.title, {
+          showNotificationRef.current(newest.title, {
             body: newest.message,
           });
         }
       }
       prevUnreadRef.current = data.unread_count;
-    } catch (err) {
-      console.warn("API notifications unreachable, using fallback notifications:", err);
-      
+    } catch (err: any) {
+      // Only log and load fallback once — don't flood the console on every poll tick
+      if (!fallbackLoadedRef.current) {
+        console.warn("API notifications unreachable, using fallback notifications:", err?.message || err);
+        fallbackLoadedRef.current = true;
+      }
+      // Mark API as unreachable to pause polling until next mount
+      apiReachableRef.current = false;
+
       let readIds = new Set<string>();
       if (typeof window !== "undefined") {
         const cachedReadIds = localStorage.getItem("eventscout_read_notifications");
@@ -65,7 +88,7 @@ export default function NotificationBell() {
             const topEvents = allEvents
               .sort((a: any, b: any) => (b.ranking_score || 0) - (a.ranking_score || 0))
               .slice(0, 2);
-            
+
             if (topEvents.length > 0) {
               fallbackNotifs = topEvents.map((ev: any, index: number) => {
                 const id = `notif-fallback-${ev.id || index}`;
@@ -102,15 +125,23 @@ export default function NotificationBell() {
       }
 
       setNotifications(fallbackNotifs);
-      setUnreadCount(fallbackNotifs.filter(n => !n.read).length);
+      setUnreadCount(fallbackNotifs.filter((n) => !n.read).length);
     }
-  }, [apiUrl, token, isAuthenticated, showNotification]);
+  }, [apiUrl, token, isAuthenticated]);
 
-  // Initial load and periodic polling every 30 seconds
+  // Initial load and periodic polling every 60 seconds
   useEffect(() => {
     if (isAuthenticated && token) {
+      // Reset reachability flag on new auth session
+      apiReachableRef.current = true;
+      fallbackLoadedRef.current = false;
       fetchNotifications();
-      const interval = setInterval(fetchNotifications, 30000);
+      // Poll every 60s (doubled from 30s to reduce load)
+      const interval = setInterval(() => {
+        // Re-enable polling attempt every 5 minutes even if previously unreachable
+        apiReachableRef.current = true;
+        fetchNotifications();
+      }, 60000);
       return () => clearInterval(interval);
     } else {
       setNotifications([]);

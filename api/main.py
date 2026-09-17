@@ -17,6 +17,19 @@ from api.routers import sources as sources_router
 
 logger = logging.getLogger("EventScoutAPI")
 
+# Module-level singletons — one MongoDB connection reused for all requests
+_event_db: Optional[EventDatabase] = None
+
+
+def get_event_db() -> EventDatabase:
+    """Returns the shared EventDatabase instance, creating it on first call."""
+    global _event_db
+    if _event_db is None:
+        _event_db = EventDatabase()
+        _event_db.get_collection()  # eagerly open connection at startup
+    return _event_db
+
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -61,7 +74,7 @@ app.add_middleware(
         "http://127.0.0.1:8000",
         "https://eventscout-mobilefirst.vercel.app",
     ],
-    allow_origin_regex=r"^(https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:[0-9]+)?|https://.*\.vercel\.app|https://.*\.trycloudflare\.com|https://.*\.loca\.lt|https://.*\.ngrok-free\.app|https://.*\.onrender\.com|chrome-extension://.*)$",
+    allow_origin_regex=r"^(https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:[0-9]+)?|https://.*\.vercel\.app|https://.*\.trycloudflare\.com|https://.*\.loca\.lt|https://.*\.ngrok-free\.app|https://.*\.onrender\.com|https://.*\.koyeb\.app|https://.*\.fly\.dev|chrome-extension://.*)$",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
@@ -115,7 +128,7 @@ async def get_events(
     and sorting. Maintains 100% backward compatibility.
     """
     try:
-        db = EventDatabase()
+        db = get_event_db()
         skill_list = [s.strip() for s in skills.split(",")] if skills else None
         events = db.query_events(
             q=q,
@@ -151,7 +164,7 @@ async def save_event_from_extension(
     """
     from datetime import datetime, timezone
 
-    db = EventDatabase()
+    db = get_event_db()
     now_iso = datetime.now(timezone.utc).isoformat()
     dt_val = None
     if request.date_time:

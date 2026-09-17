@@ -82,18 +82,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const apiFetch = async (path: string, init?: RequestInit): Promise<Response> => {
+    // 30s timeout — login/signup through a Cloudflare tunnel can be slow
+    const TIMEOUT_MS = 30000;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(
+      () => controller.abort(new DOMException("Request timed out", "AbortError")),
+      TIMEOUT_MS
+    );
+    const initWithSignal = { ...init, signal: controller.signal };
+
     try {
-      return await fetch(`${API_URL}${path}`, init);
+      const res = await fetch(`${API_URL}${path}`, initWithSignal);
+      clearTimeout(timeoutId);
+      return res;
     } catch (err) {
+      clearTimeout(timeoutId);
       if (API_URL.includes("localhost")) {
         const fallback = API_URL.replace("localhost", "127.0.0.1");
         try {
-          return await fetch(`${fallback}${path}`, init);
+          const controller2 = new AbortController();
+          const timeoutId2 = setTimeout(
+            () => controller2.abort(new DOMException("Request timed out", "AbortError")),
+            TIMEOUT_MS
+          );
+          const res = await fetch(`${fallback}${path}`, { ...init, signal: controller2.signal });
+          clearTimeout(timeoutId2);
+          return res;
         } catch {}
       } else if (API_URL.includes("127.0.0.1")) {
         const fallback = API_URL.replace("127.0.0.1", "localhost");
         try {
-          return await fetch(`${fallback}${path}`, init);
+          const controller2 = new AbortController();
+          const timeoutId2 = setTimeout(
+            () => controller2.abort(new DOMException("Request timed out", "AbortError")),
+            TIMEOUT_MS
+          );
+          const res = await fetch(`${fallback}${path}`, { ...init, signal: controller2.signal });
+          clearTimeout(timeoutId2);
+          return res;
         } catch {}
       }
       throw err;
@@ -141,7 +167,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         err.message === "Failed to fetch" ||
         err.message.includes("NetworkError") ||
         err.message.includes("Load failed") ||
-        err.name === "TypeError";
+        err.message.includes("timed out") ||
+        err.name === "TypeError" ||
+        err.name === "AbortError";
 
       if (!isNetworkError) {
         throw err;
@@ -182,7 +210,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           err.message === "Failed to fetch" ||
           err.message.includes("NetworkError") ||
           err.message.includes("Load failed") ||
-          err.name === "TypeError";
+          err.message.includes("timed out") ||
+          err.name === "TypeError" ||
+          err.name === "AbortError";
 
         if (!isNetworkError) {
           throw err;

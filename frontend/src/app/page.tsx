@@ -52,15 +52,24 @@ export default function DiscoverPage() {
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-  // Fetch events
+  // Fetch events — only re-fetch when auth is resolved and token actually changes meaningfully
+  const isAuthLoading = (useAuth as any)?.isLoading;
   useEffect(() => {
+    let cancelled = false;
     async function fetchEvents() {
       setLoading(true);
       try {
         const headers: Record<string, string> = {};
         if (token) headers["Authorization"] = `Bearer ${token}`;
 
-        const res = await fetch(`${apiUrl}/events?sort_by=recommended`, { headers });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
+        const res = await fetch(`${apiUrl}/events?sort_by=recommended`, {
+          headers,
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        if (cancelled) return;
         if (!res.ok) throw new Error("Failed to load events from server.");
 
         const data = await res.json();
@@ -71,8 +80,9 @@ export default function DiscoverPage() {
         if (typeof window !== "undefined") {
           localStorage.setItem("eventscout_cached_events", JSON.stringify(data));
         }
-      } catch (err) {
-        console.warn("API unreachable, falling back to local cache:", err);
+      } catch (err: any) {
+        if (cancelled) return;
+        console.warn("API unreachable, falling back to local cache:", err?.message || err);
         // 1. Try local storage cache first
         if (typeof window !== "undefined") {
           const cached = localStorage.getItem("eventscout_cached_events");
@@ -104,11 +114,14 @@ export default function DiscoverPage() {
 
         setError("Unable to load events. Make sure EventScout backend is active.");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     fetchEvents();
+    return () => { cancelled = true; };
+  // Re-fetch only when token meaningfully changes (not just undefined -> null)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiUrl, token]);
 
   // Handle Save / Unsave

@@ -40,5 +40,5 @@ COPY . .
 # Expose FastAPI port
 EXPOSE 8000
 
-# Default command runs FastAPI server
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Default command runs FastAPI server respecting dynamic cloud PORT env var
+CMD ["sh", "-c", "uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

@@ -42,20 +42,29 @@ function ExploreContent() {
 
   // Fetch events
   useEffect(() => {
+    let cancelled = false;
     async function fetchEvents() {
       setLoading(true);
       try {
         const headers: Record<string, string> = {};
         if (token) headers["Authorization"] = `Bearer ${token}`;
 
-        const res = await fetch(`${apiUrl}/events?sort_by=${sortBy}`, { headers });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+        const res = await fetch(`${apiUrl}/events?sort_by=${sortBy}`, {
+          headers,
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        if (cancelled) return;
         if (!res.ok) throw new Error("Could not load events.");
 
         const data = await res.json();
         setEvents(data);
         setError(null);
-      } catch (err) {
-        console.warn("Using fallback events:", err);
+      } catch (err: any) {
+        if (cancelled) return;
+        console.warn("Using fallback events:", err?.message || err);
         try {
           const fallbackRes = await fetch("/fallback_events.json");
           if (fallbackRes.ok) {
@@ -67,11 +76,12 @@ function ExploreContent() {
         } catch {}
         setError("Could not load events from server.");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     fetchEvents();
+    return () => { cancelled = true; };
   }, [apiUrl, sortBy, token]);
 
   // Handle Save / Unsave
