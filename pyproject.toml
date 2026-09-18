@@ -22,3 +22,6 @@ dependencies = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[]ool.hatch.build.targets.wheel]
+packages = ["api", "eventscout"]
