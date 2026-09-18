@@ -13,6 +13,8 @@ import argparse
 import logging
 import sys
 from pathlib import Path
+# Expose FastAPI instance for deployment
+from api.main import app
 
 # Ensure project root is in sys.path
 root_dir = Path(__file__).resolve().parent
