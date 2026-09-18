@@ -73,10 +73,11 @@ app.add_middleware(
         "http://localhost:8000",
         "http://127.0.0.1:8000",
         "https://eventscout-mobilefirst.vercel.app",
+        "*"
     ],
-    allow_origin_regex=r"^(https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:[0-9]+)?|https://.*\.vercel\.app|https://.*\.trycloudflare\.com|https://.*\.loca\.lt|https://.*\.ngrok-free\.app|https://.*\.onrender\.com|https://.*\.koyeb\.app|https://.*\.fly\.dev|chrome-extension://.*)$",
+    allow_origin_regex=r".*",
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
