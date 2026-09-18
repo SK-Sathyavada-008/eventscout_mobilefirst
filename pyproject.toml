@@ -3,7 +3,7 @@ name = "eventscout-api"
 version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = [
-  "fastapi>=0.100.0",
+  "fastapi[standard]>=0.100.0",
   "uvicorn>=0.23.0",
   "pymongo>=4.5.0",
   "python-dotenv>=1.0.0",
