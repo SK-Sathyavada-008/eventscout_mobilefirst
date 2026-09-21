@@ -28,14 +28,14 @@ async def get_notifications(
 ) -> Dict[str, Any]:
     """
     Returns recent notifications for the authenticated user, sorted newest first.
-    Includes the total unread count for UI badges.
+    Includes the total unread count for UI badges, calculated dynamically from actual notification data.
     Enforces user isolation via Bearer JWT.
     """
     db = NotificationDatabase()
     user_id = current_user["id"]
 
     notifications = db.get_user_notifications(user_id=user_id, limit=limit)
-    unread_count = db.get_unread_count(user_id=user_id)
+    unread_count = sum(1 for n in notifications if not n.get("read", False))
 
     return {
         "notifications": notifications,
@@ -45,13 +45,16 @@ async def get_notifications(
 
 @router.get("/unread-count", summary="Get unread notification count")
 async def get_unread_count(
+    limit: int = Query(30, ge=1, le=100),
     current_user: Dict[str, Any] = Depends(get_current_user),
 ) -> Dict[str, int]:
     """
     Lightweight endpoint returning only the unread count for periodic UI polling.
+    Calculated dynamically from the user's actual notification items.
     """
     db = NotificationDatabase()
-    count = db.get_unread_count(current_user["id"])
+    notifications = db.get_user_notifications(user_id=current_user["id"], limit=limit)
+    count = sum(1 for n in notifications if not n.get("read", False))
     return {"unread_count": count}
 
 

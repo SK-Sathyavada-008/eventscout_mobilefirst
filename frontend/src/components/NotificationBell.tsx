@@ -45,19 +45,38 @@ export default function NotificationBell() {
       fallbackLoadedRef.current = false;
 
       const data: NotificationsResponse = await res.json();
-      setNotifications(data.notifications);
-      setUnreadCount(data.unread_count);
+      const rawNotifs: NotificationItem[] = data.notifications || [];
+
+      // Check cached read notification IDs for instant consistency across refreshes
+      let readIds = new Set<string>();
+      if (typeof window !== "undefined") {
+        const cachedReadIds = localStorage.getItem("eventscout_read_notifications");
+        if (cachedReadIds) {
+          try {
+            JSON.parse(cachedReadIds).forEach((id: string) => readIds.add(id));
+          } catch {}
+        }
+      }
+
+      const notifs = rawNotifs.map((n) =>
+        readIds.has(n.id) ? { ...n, read: true } : n
+      );
+      setNotifications(notifs);
+
+      // Dynamically calculate true unread count from actual notification items
+      const dynamicUnread = notifs.filter((n) => !n.read).length;
+      setUnreadCount(dynamicUnread);
 
       // Trigger browser notification if a brand new unread notification arrived
-      if (data.unread_count > prevUnreadRef.current && prevUnreadRef.current !== 0) {
-        const newest = data.notifications[0];
+      if (dynamicUnread > prevUnreadRef.current && prevUnreadRef.current !== 0) {
+        const newest = notifs[0];
         if (newest && !newest.read) {
           showNotificationRef.current(newest.title, {
             body: newest.message,
           });
         }
       }
-      prevUnreadRef.current = data.unread_count;
+      prevUnreadRef.current = dynamicUnread;
     } catch (err: any) {
       // Only log and load fallback once — don't flood the console on every poll tick
       if (!fallbackLoadedRef.current) {
@@ -168,10 +187,11 @@ export default function NotificationBell() {
     if (!token) return;
 
     // Optimistic UI update
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-    setUnreadCount((c) => Math.max(0, c - 1));
+    setNotifications((prev) => {
+      const updated = prev.map((n) => (n.id === id ? { ...n, read: true } : n));
+      setUnreadCount(updated.filter((n) => !n.read).length);
+      return updated;
+    });
 
     if (typeof window !== "undefined") {
       try {
