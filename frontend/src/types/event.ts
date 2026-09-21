@@ -7,6 +7,7 @@ export interface Event {
   organizer: string;
   source: string;
   mode_location: string;
+  location?: string | null;
   city: string | null;
   country: string | null;
   poster_image_url: string | null;

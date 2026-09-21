@@ -229,6 +229,7 @@ class EventDatabase:
         event_type: Optional[str] = None,
         mode: Optional[str] = None,
         city: Optional[str] = None,
+        location: Optional[str] = None,
         is_free: Optional[bool] = None,
         source: Optional[str] = None,
         skills: Optional[List[str]] = None,
@@ -245,6 +246,7 @@ class EventDatabase:
         """
         import re
         from eventscout.services.ranking_service import ranking_service
+        from eventscout.utils.location_utils import match_location_filter
 
         col = self.get_collection()
         conditions: List[Dict[str, Any]] = []
@@ -347,6 +349,10 @@ class EventDatabase:
                 doc["registrationUrl"] = doc["registration_url"]
             if "mode_location" in doc and "location" not in doc:
                 doc["location"] = doc["mode_location"]
+
+            if location and location.strip() and location.lower() != "all":
+                if not match_location_filter(doc, location):
+                    continue
 
             active_events.append(doc)
 

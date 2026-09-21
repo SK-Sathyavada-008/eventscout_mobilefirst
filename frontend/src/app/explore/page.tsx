@@ -6,6 +6,7 @@ import { Event } from "@/types/event";
 import EventCard from "@/components/EventCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { isHackathon, isWorkshop } from "@/utils/eventUtils";
+import { matchLocationFilter, LOCATION_OPTIONS, LocationCategory } from "@/utils/locationUtils";
 
 function ExploreContent() {
   const searchParams = useSearchParams();
@@ -23,6 +24,7 @@ function ExploreContent() {
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedCategoryChip, setSelectedCategoryChip] = useState<string>("All");
   const [selectedMode, setSelectedMode] = useState<string>("All");
+  const [selectedLocation, setSelectedLocation] = useState<LocationCategory>("All");
   const [selectedPrice, setSelectedPrice] = useState<string>("All");
   const [selectedSource, setSelectedSource] = useState<string>("All");
   const [sortBy, setSortBy] = useState<string>("recommended");
@@ -159,6 +161,9 @@ function ExploreContent() {
         if (selectedMode === "In-Person" && loc.includes("online")) return false;
       }
 
+      // Location / Place filter
+      if (!matchLocationFilter(ev, selectedLocation)) return false;
+
       // Price filter
       if (selectedPrice === "Free" && !ev.is_free) return false;
       if (selectedPrice === "Paid" && ev.is_free) return false;
@@ -179,22 +184,24 @@ function ExploreContent() {
         ev.source?.toLowerCase().includes(q)
       );
     });
-  }, [events, selectedCategoryChip, selectedMode, selectedPrice, selectedSource, searchQuery]);
+  }, [events, selectedCategoryChip, selectedMode, selectedLocation, selectedPrice, selectedSource, searchQuery]);
 
   // Active filter count
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     if (selectedMode !== "All") count++;
+    if (selectedLocation !== "All") count++;
     if (selectedPrice !== "All") count++;
     if (selectedSource !== "All") count++;
     if (selectedCategoryChip !== "All") count++;
     return count;
-  }, [selectedMode, selectedPrice, selectedSource, selectedCategoryChip]);
+  }, [selectedMode, selectedLocation, selectedPrice, selectedSource, selectedCategoryChip]);
 
   const resetFilters = () => {
     setSearchQuery("");
     setSelectedCategoryChip("All");
     setSelectedMode("All");
+    setSelectedLocation("All");
     setSelectedPrice("All");
     setSelectedSource("All");
     setSortBy("recommended");
@@ -307,10 +314,22 @@ function ExploreContent() {
       </div>
 
       {/* Opportunities Count matching Screen 3 */}
-      <div className="flex items-center justify-between mb-3 text-xs text-slate-400">
+      <div className="flex items-center justify-between mb-3 text-xs text-slate-400 flex-wrap gap-2">
         <span className="font-semibold text-slate-300">
           {filteredEvents.length} opportunities found
         </span>
+        {selectedLocation !== "All" && (
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-950/70 border border-indigo-500/40 text-indigo-300 rounded-full text-xs font-semibold">
+            <span>📍 {selectedLocation}</span>
+            <button
+              onClick={() => setSelectedLocation("All")}
+              className="hover:text-white ml-0.5"
+              title="Clear location filter"
+            >
+              ✕
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Loading Skeletons */}
@@ -368,6 +387,39 @@ function ExploreContent() {
               >
                 ✕
               </button>
+            </div>
+
+            {/* Location / Place */}
+            <div className="mb-5">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider">
+                  Location / Place
+                </label>
+                {selectedLocation !== "All" && (
+                  <button
+                    onClick={() => setSelectedLocation("All")}
+                    className="text-[10px] text-indigo-400 hover:text-indigo-300 font-semibold"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {LOCATION_OPTIONS.map((loc) => (
+                  <button
+                    key={loc.id}
+                    onClick={() => setSelectedLocation(loc.id)}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all truncate text-center ${
+                      selectedLocation === loc.id
+                        ? "bg-indigo-600 text-white border-indigo-500 shadow-sm shadow-indigo-600/30"
+                        : "bg-slate-900/60 text-slate-400 border-slate-800 hover:text-white"
+                    }`}
+                    title={loc.label}
+                  >
+                    {loc.id === "Hyderabad" ? "📍 Hyderabad" : loc.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Mode */}
