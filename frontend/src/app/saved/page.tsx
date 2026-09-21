@@ -12,7 +12,7 @@ function SavedEventsContent() {
   const router = useRouter();
   const initialTab = searchParams.get("tab") === "attending" ? "attending" : "saved";
 
-  const { user, token, isAuthenticated, updateUser } = useAuth();
+  const { user, token, isAuthenticated, isLoading: authLoading, refreshUser, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState<"saved" | "attending">(initialTab);
   const [savedEvents, setSavedEvents] = useState<Event[]>([]);
   const [attendingEvents, setAttendingEvents] = useState<Event[]>([]);
@@ -23,11 +23,12 @@ function SavedEventsContent() {
 
   // Fetch saved events
   const fetchSavedEvents = useCallback(async () => {
+    if (authLoading) return;
     setLoading(true);
     try {
       if (token) {
         try {
-          const res = await fetch(`${apiUrl}/users/me/saved-events`, {
+          const res = await fetch(`${apiUrl}/events/saved`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (res.ok) {
@@ -36,6 +37,8 @@ function SavedEventsContent() {
             // Cache in local storage for offline
             if (typeof window !== "undefined") {
               localStorage.setItem("eventscout_cached_saved_events", JSON.stringify(data));
+              const ids = data.map((e) => e.id || e._id).filter(Boolean) as string[];
+              localStorage.setItem("eventscout_saved_ids", JSON.stringify(ids));
             }
             setLoading(false);
             return;
@@ -58,9 +61,28 @@ function SavedEventsContent() {
         const cachedSaved = localStorage.getItem("eventscout_cached_saved_events");
         if (cachedSaved) {
           try {
-            setSavedEvents(JSON.parse(cachedSaved));
-            setLoading(false);
-            return;
+            const list: Event[] = JSON.parse(cachedSaved);
+            if (list.length > 0) {
+              setSavedEvents(list);
+              setLoading(false);
+              return;
+            }
+          } catch {}
+        }
+
+        // Check cached events from discover/explore feed
+        const cachedGeneral = localStorage.getItem("eventscout_cached_events");
+        if (cachedGeneral) {
+          try {
+            const allCached: Event[] = JSON.parse(cachedGeneral);
+            const matched = allCached.filter(
+              (e) => (e.id && userSavedIds.has(e.id)) || (e._id && userSavedIds.has(e._id))
+            );
+            if (matched.length > 0) {
+              setSavedEvents(matched);
+              setLoading(false);
+              return;
+            }
           } catch {}
         }
       }
@@ -69,7 +91,9 @@ function SavedEventsContent() {
       const fbRes = await fetch("/fallback_events.json");
       if (fbRes.ok) {
         const all: Event[] = await fbRes.json();
-        const matched = all.filter((e) => e.id && userSavedIds.has(e.id));
+        const matched = all.filter(
+          (e) => (e.id && userSavedIds.has(e.id)) || (e._id && userSavedIds.has(e._id))
+        );
         setSavedEvents(matched); // Only show actually saved events
       }
     } catch (err) {
@@ -85,7 +109,7 @@ function SavedEventsContent() {
     } finally {
       setLoading(false);
     }
-  }, [apiUrl, token, user?.saved_event_ids]);
+  }, [apiUrl, token, authLoading, user?.saved_event_ids]);
 
   useEffect(() => {
     fetchSavedEvents();
@@ -94,11 +118,13 @@ function SavedEventsContent() {
   // Handle Unsave
   const handleToggleSave = async (eventId: string, currentlySaved: boolean) => {
     if (currentlySaved) {
-      setSavedEvents((prev) => prev.filter((ev) => ev.id !== eventId));
+      const updatedSavedEvents = savedEvents.filter((ev) => (ev.id || ev._id) !== eventId);
+      setSavedEvents(updatedSavedEvents);
       const nextIds = (user?.saved_event_ids || []).filter((id) => id !== eventId);
       updateUser({ saved_event_ids: nextIds });
       if (typeof window !== "undefined") {
         localStorage.setItem("eventscout_saved_ids", JSON.stringify(nextIds));
+        localStorage.setItem("eventscout_cached_saved_events", JSON.stringify(updatedSavedEvents));
       }
     }
 
@@ -108,6 +134,7 @@ function SavedEventsContent() {
           method: currentlySaved ? "DELETE" : "POST",
           headers: { Authorization: `Bearer ${token}` },
         });
+        refreshUser();
       }
     } catch (err) {
       console.warn("Offline save toggle:", err);
@@ -183,24 +210,32 @@ function SavedEventsContent() {
         <>
           {displayedList.length > 0 ? (
             <div className="space-y-3">
-              {displayedList.map((ev) => (
-                <div key={ev.id || ev.title} className="relative">
-                  <EventCard
-                    event={ev}
-                    variant="compact"
-                    isSaved={true}
-                    onToggleSave={handleToggleSave}
-                  />
-                  {isEditMode && (
-                    <button
-                      onClick={() => ev.id && handleToggleSave(ev.id, true)}
-                      className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-rose-600 text-white text-xs font-black flex items-center justify-center shadow-md z-10 hover:bg-rose-500"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-              ))}
+              {displayedList.map((ev) => {
+                const eventKey = ev.id || ev._id || ev.title;
+                const isCurrentlySaved = Boolean(
+                  (ev.id && user?.saved_event_ids?.includes(ev.id)) ||
+                  (ev._id && user?.saved_event_ids?.includes(ev._id)) ||
+                  activeTab === "saved"
+                );
+                return (
+                  <div key={eventKey} className="relative">
+                    <EventCard
+                      event={ev}
+                      variant="compact"
+                      isSaved={isCurrentlySaved}
+                      onToggleSave={handleToggleSave}
+                    />
+                    {isEditMode && (
+                      <button
+                        onClick={() => (ev.id || ev._id) && handleToggleSave(ev.id || ev._id || "", true)}
+                        className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-rose-600 text-white text-xs font-black flex items-center justify-center shadow-md z-10 hover:bg-rose-500"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           ) : (
             /* Empty State matching Screen 6 */

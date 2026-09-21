@@ -120,20 +120,25 @@ export default function EventDetailPage() {
       router.push("/login");
       return;
     }
-    if (!event?.id) return;
+    const targetId = event?.id || event?._id;
+    if (!targetId) return;
 
     setSaving(true);
     const willBeSaved = !isSaved;
     setIsSaved(willBeSaved);
 
     const newSavedList = willBeSaved
-      ? [...(user?.saved_event_ids || []), event.id]
-      : (user?.saved_event_ids || []).filter((eId) => eId !== event.id);
+      ? [...(user?.saved_event_ids || []), targetId]
+      : (user?.saved_event_ids || []).filter((eId) => eId !== targetId);
     updateUser({ saved_event_ids: newSavedList });
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("eventscout_saved_ids", JSON.stringify(newSavedList));
+    }
 
     try {
       if (token) {
-        await fetch(`${apiUrl}/events/${event.id}/save`, {
+        await fetch(`${apiUrl}/events/${targetId}/save`, {
           method: willBeSaved ? "POST" : "DELETE",
           headers: { Authorization: `Bearer ${token}` },
         });

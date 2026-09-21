@@ -38,6 +38,7 @@ def _validate_event_id(event_id: str) -> ObjectId:
 
 
 @router.get("/events/saved", summary="Get all events saved by the current user")
+@router.get("/users/me/saved-events", summary="Get all events saved by the current user (alias)")
 async def get_saved_events(
     current_user: Dict[str, Any] = Depends(get_current_user),
 ) -> List[Dict[str, Any]]:

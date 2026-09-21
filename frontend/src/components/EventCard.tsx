@@ -75,12 +75,13 @@ export default function EventCard({
   const handleSaveClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!onToggleSave || !event.id) return;
+    const eventIdentity = event.id || event._id;
+    if (!onToggleSave || !eventIdentity) return;
 
     setSaving(true);
     try {
       const willBeSaved = !isSaved;
-      await onToggleSave(event.id, !!isSaved);
+      await onToggleSave(eventIdentity, !!isSaved);
       if (typeof window !== "undefined") {
         window.dispatchEvent(
           new CustomEvent("eventscout-toast", {
@@ -188,7 +189,7 @@ export default function EventCard({
         </div>
 
         {/* Top Right: Bookmark Button */}
-        {onToggleSave && event.id && (
+        {onToggleSave && (event.id || event._id) && (
           <button
             aria-label={isSaved ? "Unsave event" : "Save event"}
             onClick={handleSaveClick}
@@ -246,7 +247,7 @@ export default function EventCard({
           </div>
 
           {/* Save Button Over Image */}
-          {onToggleSave && event.id && (
+          {onToggleSave && (event.id || event._id) && (
             <button
               aria-label={isSaved ? "Unsave event" : "Save event"}
               onClick={handleSaveClick}
@@ -337,7 +338,7 @@ export default function EventCard({
         </div>
 
         {/* Save Button */}
-        {onToggleSave && event.id && (
+        {onToggleSave && (event.id || event._id) && (
           <button
             aria-label={isSaved ? "Unsave event" : "Save event"}
             onClick={handleSaveClick}

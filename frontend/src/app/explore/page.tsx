@@ -101,6 +101,10 @@ function ExploreContent() {
         : [...(user?.saved_event_ids || []), eventId];
       updateUser({ saved_event_ids: newSavedList });
 
+      if (typeof window !== "undefined") {
+        localStorage.setItem("eventscout_saved_ids", JSON.stringify(newSavedList));
+      }
+
       try {
         if (token) {
           await fetch(`${apiUrl}/events/${eventId}/save`, {
