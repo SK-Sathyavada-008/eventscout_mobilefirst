@@ -63,12 +63,12 @@ export default function NotificationBell() {
       );
       setNotifications(notifs);
 
-      // Dynamically calculate true unread count from actual notification items
-      const dynamicUnread = notifs.filter((n) => !n.read).length;
-      setUnreadCount(dynamicUnread);
+      // Use authoritative global unread count from backend
+      const globalUnread = typeof data.unread_count === "number" ? data.unread_count : 0;
+      setUnreadCount(globalUnread);
 
       // Trigger browser notification if a brand new unread notification arrived
-      if (dynamicUnread > prevUnreadRef.current && prevUnreadRef.current !== 0) {
+      if (globalUnread > prevUnreadRef.current && prevUnreadRef.current !== 0) {
         const newest = notifs[0];
         if (newest && !newest.read) {
           showNotificationRef.current(newest.title, {
@@ -76,7 +76,7 @@ export default function NotificationBell() {
           });
         }
       }
-      prevUnreadRef.current = dynamicUnread;
+      prevUnreadRef.current = globalUnread;
     } catch (err: any) {
       // Only log and load fallback once — don't flood the console on every poll tick
       if (!fallbackLoadedRef.current) {
@@ -188,9 +188,11 @@ export default function NotificationBell() {
 
     // Optimistic UI update
     setNotifications((prev) => {
-      const updated = prev.map((n) => (n.id === id ? { ...n, read: true } : n));
-      setUnreadCount(updated.filter((n) => !n.read).length);
-      return updated;
+      const target = prev.find((n) => n.id === id);
+      if (target && !target.read) {
+        setUnreadCount((c) => Math.max(0, c - 1));
+      }
+      return prev.map((n) => (n.id === id ? { ...n, read: true } : n));
     });
 
     if (typeof window !== "undefined") {

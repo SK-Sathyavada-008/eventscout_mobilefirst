@@ -151,7 +151,7 @@ export default function EventCard({
                 Workshop
               </span>
             )}
-            {classification === "meetup" && (
+            {(classification === "conference" || classification === "meetup") && (
               <span className="bg-indigo-500/15 text-indigo-400 text-[10px] font-bold px-2 py-0.5 rounded-md border border-indigo-500/30">
                 Conference
               </span>
@@ -297,7 +297,7 @@ export default function EventCard({
           {/* Tags */}
           <div className="flex items-center gap-1.5 flex-wrap mt-auto pt-2 border-t border-slate-800/80">
             <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
-              {classification === "hackathon" ? "Hackathon" : "Workshop"}
+              {classification === "hackathon" ? "Hackathon" : classification === "workshop" ? "Workshop" : "Conference"}
             </span>
             {event.host_badge && (
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-500/15 text-purple-300 border border-purple-500/30 truncate max-w-[150px]">

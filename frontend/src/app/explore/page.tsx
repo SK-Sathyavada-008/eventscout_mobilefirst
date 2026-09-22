@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Event } from "@/types/event";
 import EventCard from "@/components/EventCard";
 import { useAuth } from "@/contexts/AuthContext";
-import { isHackathon, isWorkshop } from "@/utils/eventUtils";
+import { isHackathon, isWorkshop, isConference } from "@/utils/eventUtils";
 import { matchLocationFilter, LOCATION_OPTIONS, LocationCategory } from "@/utils/locationUtils";
 
 function ExploreContent() {
@@ -137,21 +137,17 @@ function ExploreContent() {
       // Category chip filter
       if (selectedCategoryChip === "Hackathons" && !isHackathon(ev)) return false;
       if (selectedCategoryChip === "Workshops" && !isWorkshop(ev)) return false;
+      if (selectedCategoryChip === "Conferences" && !isConference(ev)) return false;
       if (
         selectedCategoryChip !== "All" &&
         selectedCategoryChip !== "Hackathons" &&
-        selectedCategoryChip !== "Workshops"
+        selectedCategoryChip !== "Workshops" &&
+        selectedCategoryChip !== "Conferences"
       ) {
-        if (selectedCategoryChip === "Conferences") {
-          const isConf = ev.title?.toLowerCase().includes('conference') || 
-                         ev.categories?.some(c => c.toLowerCase().includes('conference') || c.toLowerCase().includes('meetup'));
-          if (!isConf) return false;
-        } else {
-          const match = ev.categories?.some(
-            (c) => c.toLowerCase() === selectedCategoryChip.toLowerCase()
-          );
-          if (!match) return false;
-        }
+        const match = ev.categories?.some(
+          (c) => c.toLowerCase() === selectedCategoryChip.toLowerCase()
+        );
+        if (!match) return false;
       }
 
       // Mode filter

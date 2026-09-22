@@ -2,7 +2,7 @@ import { Event } from "@/types/event";
 
 export type EventSectionType = "all" | "hackathons" | "workshops" | "conferences";
 
-export type EventClassification = "hackathon" | "workshop" | "meetup";
+export type EventClassification = "hackathon" | "workshop" | "conference" | "meetup";
 
 const HACKATHON_PLATFORMS = new Set(["devpost", "devfolio", "mlh", "unstop"]);
 
@@ -48,10 +48,19 @@ export function isWorkshop(event: Event): boolean {
 }
 
 /**
+ * Checks if an event is classified as a conference / summit / meetup.
+ */
+export function isConference(event: Event): boolean {
+  if (isHackathon(event)) return false;
+  if (isWorkshop(event)) return false;
+  return true;
+}
+
+/**
  * Returns the primary classification for display badges.
  */
 export function getEventClassification(event: Event): EventClassification {
   if (isHackathon(event)) return "hackathon";
   if (isWorkshop(event)) return "workshop";
-  return "meetup";
+  return "conference";
 }

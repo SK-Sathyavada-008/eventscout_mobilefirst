@@ -269,18 +269,43 @@ class EventDatabase:
         # 2. Event Type Filter (e.g. hackathon, workshop, conference)
         if event_type and event_type.strip() and event_type.lower() != "all":
             et_lower = event_type.strip().lower()
-            regex_pat = {"$regex": re.escape(et_lower), "$options": "i"}
-            conditions.append({
-                "$or": [
-                    {"title": regex_pat},
-                    {"description": regex_pat},
-                    {"categories": regex_pat},
-                ]
-            })
+            et_base = et_lower.rstrip("s") if len(et_lower) > 3 and et_lower.endswith("s") else et_lower
+            if et_base in ["conference", "meetup"]:
+                regex_pat = {"$regex": r"conference|meetup|summit|symposium", "$options": "i"}
+                conditions.append({
+                    "$or": [
+                        {"title": regex_pat},
+                        {"description": regex_pat},
+                        {"categories": regex_pat},
+                        {"source": {"$regex": r"^meetup$", "$options": "i"}},
+                    ]
+                })
+            else:
+                regex_pat = {"$regex": re.escape(et_base), "$options": "i"}
+                conditions.append({
+                    "$or": [
+                        {"title": regex_pat},
+                        {"description": regex_pat},
+                        {"categories": regex_pat},
+                    ]
+                })
 
         # 3. Category Filter
         if category and category.strip() and category.lower() != "all":
-            conditions.append({"categories": {"$regex": re.escape(category.strip()), "$options": "i"}})
+            cat_lower = category.strip().lower()
+            cat_base = cat_lower.rstrip("s") if len(cat_lower) > 3 and cat_lower.endswith("s") else cat_lower
+            if cat_base in ["conference", "meetup"]:
+                regex_pat = {"$regex": r"conference|meetup|summit|symposium", "$options": "i"}
+                conditions.append({
+                    "$or": [
+                        {"categories": regex_pat},
+                        {"title": regex_pat},
+                        {"description": regex_pat},
+                        {"source": {"$regex": r"^meetup$", "$options": "i"}},
+                    ]
+                })
+            else:
+                conditions.append({"categories": {"$regex": re.escape(category.strip()), "$options": "i"}})
 
         # 4. Mode / Location (Online vs In-Person vs Hybrid)
         if mode and mode.strip() and mode.lower() != "all":

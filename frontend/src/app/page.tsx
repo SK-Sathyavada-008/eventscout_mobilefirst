@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Event } from "@/types/event";
 import EventCard from "@/components/EventCard";
 import { useAuth } from "@/contexts/AuthContext";
-import { isHackathon, isWorkshop, EventSectionType } from "@/utils/eventUtils";
+import { isHackathon, isWorkshop, isConference, EventSectionType } from "@/utils/eventUtils";
 import PWAInstallModal from "@/components/PWAInstallModal";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import SuggestSourceModal from "@/components/SuggestSourceModal";
@@ -172,11 +172,7 @@ export default function DiscoverPage() {
     return events.filter((ev) => {
       if (activeCategory === "hackathons" && !isHackathon(ev)) return false;
       if (activeCategory === "workshops" && !isWorkshop(ev)) return false;
-      if (activeCategory === "conferences") {
-        const isConf = ev.title?.toLowerCase().includes('conference') || 
-                       ev.categories?.some(c => c.toLowerCase().includes('conference') || c.toLowerCase().includes('meetup'));
-        if (!isConf) return false;
-      }
+      if (activeCategory === "conferences" && !isConference(ev)) return false;
       return true;
     });
   }, [events, activeCategory]);

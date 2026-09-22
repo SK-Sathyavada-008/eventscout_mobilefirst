@@ -8,6 +8,7 @@ import { Event } from "@/types/event";
 import { useAuth } from "@/contexts/AuthContext";
 import { getEventClassification } from "@/utils/eventUtils";
 import { getEventId } from "@/components/EventCard";
+import EventDescription from "@/components/EventDescription";
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -487,16 +488,11 @@ export default function EventDetailPage() {
       <div className="mb-10 text-slate-300 text-sm leading-relaxed space-y-4">
         {activeTab === "about" && (
           <>
-            <p className="whitespace-pre-line text-slate-300 leading-relaxed">
-              {event.description 
-                ? event.description
-                    .replace(/\*\*/g, "")
-                    .replace(/\*/g, "")
-                    .replace(/#/g, "")
-                    .replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1")
-                    .replace(/`/g, "")
-                : "A flagship technical event bringing together passionate developers, students, and tech leaders to innovate and build real-world solutions."}
-            </p>
+            <EventDescription
+              description={event.description}
+              className="whitespace-pre-line text-slate-300 leading-relaxed"
+              fallbackText="A flagship technical event bringing together passionate developers, students, and tech leaders to innovate and build real-world solutions."
+            />
 
             {/* Structured Highlights */}
             <div className="bg-[#131b2e] border border-slate-800/90 rounded-2xl p-4 space-y-2.5 mt-4">

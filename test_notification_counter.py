@@ -1,14 +1,12 @@
 """
 Unit and Integration tests for Notification Counter Fix:
 Verifies:
-1. 0 unread notifications -> unread_count is 0.
-2. 1 unread notification -> unread_count is 1.
-3. Multiple unread notifications (e.g. 25) -> exact count.
-4. Read notifications do NOT count (e.g. 25 total, 5 read -> count is 20).
-5. Marking a notification as read immediately decrements unread count.
-6. Marking all notifications as read resets unread count to 0.
-7. Pagination / limits do NOT cause duplicate or distorted counting.
-8. Dynamic calculation from actual notification items matches state.
+Case 1: 30 total, 25 unread, limit=25 -> notifications.length=25, unread_count=25
+Case 2: 30 total, 30 unread, limit=25 -> notifications.length=25, unread_count=30
+Case 3: 100 total, 73 unread, limit=25 -> notifications.length=25, unread_count=73
+Case 4: Mark one unread notification as read -> 73 -> 72
+Case 5: Mark all as read -> 72 -> 0
+Case 6: Changing notification list limit does NOT affect global unread count
 """
 
 import unittest
@@ -21,7 +19,50 @@ from api.main import app
 from api.auth import create_access_token
 
 
-class TestNotificationCounter(unittest.TestCase):
+class MockNotificationStore:
+    """Stateful in-memory notification store simulating MongoDB behavior."""
+
+    def __init__(self, user_id: str, total_count: int, unread_count: int):
+        self.user_id = user_id
+        self.notifications = []
+        for i in range(total_count):
+            oid = str(ObjectId())
+            self.notifications.append({
+                "id": oid,
+                "_id": oid,
+                "user_id": user_id,
+                "event_id": str(ObjectId()),
+                "type": "new_event",
+                "title": f"Notification {i}",
+                "message": f"Message body for notification {i}",
+                "read": i >= unread_count,  # First `unread_count` are unread (read=False)
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            })
+
+    def get_user_notifications(self, user_id: str, limit: int = 30):
+        user_notifs = [n for n in self.notifications if n["user_id"] == user_id]
+        return user_notifs[:limit]
+
+    def get_unread_count(self, user_id: str) -> int:
+        return sum(1 for n in self.notifications if n["user_id"] == user_id and not n["read"])
+
+    def mark_as_read(self, user_id: str, notification_id: str) -> bool:
+        for n in self.notifications:
+            if n["user_id"] == user_id and (n["id"] == notification_id or n["_id"] == notification_id):
+                n["read"] = True
+                return True
+        return False
+
+    def mark_all_read(self, user_id: str) -> int:
+        count = 0
+        for n in self.notifications:
+            if n["user_id"] == user_id and not n["read"]:
+                n["read"] = True
+                count += 1
+        return count
+
+
+class TestNotificationCounterCases(unittest.TestCase):
     def setUp(self):
         self.client = TestClient(app)
         self.user_id = str(ObjectId())
@@ -30,116 +71,148 @@ class TestNotificationCounter(unittest.TestCase):
             "email": "tester@example.com",
             "username": "tester",
         })
-
-    def _generate_notifications(self, count: int, unread_count: int):
-        """Generates mock notifications where the first `unread_count` are unread."""
-        items = []
-        for i in range(count):
-            items.append({
-                "id": f"notif_{i}",
-                "_id": f"notif_{i}",
-                "user_id": self.user_id,
-                "event_id": str(ObjectId()),
-                "type": "new_event",
-                "title": f"Event {i}",
-                "message": f"Details for event {i}",
-                "read": i >= unread_count,  # First `unread_count` are False, remainder True
-                "created_at": datetime.now(timezone.utc).isoformat(),
-            })
-        return items
+        self.headers = {"Authorization": f"Bearer {self.token}"}
 
     @patch("api.routers.notifications.NotificationDatabase")
-    def test_zero_unread_notifications(self, mock_db_cls):
-        """0 unread notifications returns unread_count 0."""
+    def test_case_1_30_total_25_unread_limit_25(self, mock_db_cls):
+        """Case 1: 30 total, 25 unread, limit=25 -> notifications.length=25, unread_count=25."""
+        store = MockNotificationStore(self.user_id, total_count=30, unread_count=25)
         mock_db = MagicMock()
+        mock_db.get_user_notifications.side_effect = store.get_user_notifications
+        mock_db.get_unread_count.side_effect = store.get_unread_count
         mock_db_cls.return_value = mock_db
 
-        # 10 notifications, all marked read
-        mock_db.get_user_notifications.return_value = self._generate_notifications(count=10, unread_count=0)
-
-        res = self.client.get("/notifications", headers={"Authorization": f"Bearer {self.token}"})
+        res = self.client.get("/notifications?limit=25", headers=self.headers)
         self.assertEqual(res.status_code, 200)
         data = res.json()
-        self.assertEqual(len(data["notifications"]), 10)
-        self.assertEqual(data["unread_count"], 0)
 
-    @patch("api.routers.notifications.NotificationDatabase")
-    def test_single_unread_notification(self, mock_db_cls):
-        """1 unread notification returns unread_count 1."""
-        mock_db = MagicMock()
-        mock_db_cls.return_value = mock_db
-
-        mock_db.get_user_notifications.return_value = self._generate_notifications(count=5, unread_count=1)
-
-        res = self.client.get("/notifications", headers={"Authorization": f"Bearer {self.token}"})
-        self.assertEqual(res.status_code, 200)
-        data = res.json()
-        self.assertEqual(len(data["notifications"]), 5)
-        self.assertEqual(data["unread_count"], 1)
-
-    @patch("api.routers.notifications.NotificationDatabase")
-    def test_multiple_unread_notifications_exact_count(self, mock_db_cls):
-        """Exactly 25 unread notifications returns unread_count 25 dynamically."""
-        mock_db = MagicMock()
-        mock_db_cls.return_value = mock_db
-
-        # 25 notifications, all unread
-        mock_db.get_user_notifications.return_value = self._generate_notifications(count=25, unread_count=25)
-
-        res = self.client.get("/notifications?limit=25", headers={"Authorization": f"Bearer {self.token}"})
-        self.assertEqual(res.status_code, 200)
-        data = res.json()
         self.assertEqual(len(data["notifications"]), 25)
         self.assertEqual(data["unread_count"], 25)
 
     @patch("api.routers.notifications.NotificationDatabase")
-    def test_read_notifications_do_not_count(self, mock_db_cls):
-        """Read notifications do NOT contribute to unread_count (25 total, 5 unread -> 5)."""
+    def test_case_2_30_total_30_unread_limit_25(self, mock_db_cls):
+        """Case 2: 30 total, 30 unread, limit=25 -> notifications.length=25, unread_count=30."""
+        store = MockNotificationStore(self.user_id, total_count=30, unread_count=30)
         mock_db = MagicMock()
+        mock_db.get_user_notifications.side_effect = store.get_user_notifications
+        mock_db.get_unread_count.side_effect = store.get_unread_count
         mock_db_cls.return_value = mock_db
 
-        mock_db.get_user_notifications.return_value = self._generate_notifications(count=25, unread_count=5)
-
-        res = self.client.get("/notifications?limit=25", headers={"Authorization": f"Bearer {self.token}"})
+        res = self.client.get("/notifications?limit=25", headers=self.headers)
         self.assertEqual(res.status_code, 200)
         data = res.json()
-        self.assertEqual(data["unread_count"], 5)
+
+        # Paginated slice has 25 notifications, but global unread count is 30
+        self.assertEqual(len(data["notifications"]), 25)
+        self.assertEqual(data["unread_count"], 30)
 
     @patch("api.routers.notifications.NotificationDatabase")
-    def test_unread_count_lightweight_endpoint(self, mock_db_cls):
-        """GET /notifications/unread-count dynamically returns exact count."""
+    def test_case_3_100_total_73_unread_limit_25(self, mock_db_cls):
+        """Case 3: 100 total, 73 unread, limit=25 -> notifications.length=25, unread_count=73."""
+        store = MockNotificationStore(self.user_id, total_count=100, unread_count=73)
         mock_db = MagicMock()
+        mock_db.get_user_notifications.side_effect = store.get_user_notifications
+        mock_db.get_unread_count.side_effect = store.get_unread_count
         mock_db_cls.return_value = mock_db
 
-        mock_db.get_user_notifications.return_value = self._generate_notifications(count=25, unread_count=7)
-
-        res = self.client.get("/notifications/unread-count", headers={"Authorization": f"Bearer {self.token}"})
+        res = self.client.get("/notifications?limit=25", headers=self.headers)
         self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.json()["unread_count"], 7)
+        data = res.json()
+
+        self.assertEqual(len(data["notifications"]), 25)
+        self.assertEqual(data["unread_count"], 73)
 
     @patch("api.routers.notifications.NotificationDatabase")
-    def test_mark_as_read_and_immediate_update(self, mock_db_cls):
-        """Marking a notification as read succeeds and updates read state."""
+    def test_case_4_mark_one_unread_notification_as_read(self, mock_db_cls):
+        """Case 4: Mark one unread notification as read: 73 -> 72."""
+        store = MockNotificationStore(self.user_id, total_count=100, unread_count=73)
         mock_db = MagicMock()
+        mock_db.get_user_notifications.side_effect = store.get_user_notifications
+        mock_db.get_unread_count.side_effect = store.get_unread_count
+        mock_db.mark_as_read.side_effect = store.mark_as_read
         mock_db_cls.return_value = mock_db
-        mock_db.mark_as_read.return_value = True
 
-        res = self.client.post("/notifications/notif_0/read", headers={"Authorization": f"Bearer {self.token}"})
+        # Verify initial global count is 73
+        res = self.client.get("/notifications/unread-count", headers=self.headers)
         self.assertEqual(res.status_code, 200)
-        self.assertTrue(res.json()["read"])
-        mock_db.mark_as_read.assert_called_with(user_id=self.user_id, notification_id="notif_0")
+        self.assertEqual(res.json()["unread_count"], 73)
+
+        # Mark first unread notification as read
+        unread_notif_id = store.notifications[0]["id"]
+        read_res = self.client.post(f"/notifications/{unread_notif_id}/read", headers=self.headers)
+        self.assertEqual(read_res.status_code, 200)
+        self.assertTrue(read_res.json()["read"])
+
+        # Verify global unread count decreased by exactly 1: 73 -> 72
+        res2 = self.client.get("/notifications/unread-count", headers=self.headers)
+        self.assertEqual(res2.status_code, 200)
+        self.assertEqual(res2.json()["unread_count"], 72)
+
+        # Also verify GET /notifications endpoint returns unread_count=72
+        res3 = self.client.get("/notifications?limit=25", headers=self.headers)
+        self.assertEqual(res3.status_code, 200)
+        self.assertEqual(res3.json()["unread_count"], 72)
 
     @patch("api.routers.notifications.NotificationDatabase")
-    def test_mark_all_read(self, mock_db_cls):
-        """Marking all as read succeeds."""
+    def test_case_5_mark_all_as_read(self, mock_db_cls):
+        """Case 5: Mark all as read: 72 -> 0."""
+        store = MockNotificationStore(self.user_id, total_count=100, unread_count=72)
         mock_db = MagicMock()
+        mock_db.get_user_notifications.side_effect = store.get_user_notifications
+        mock_db.get_unread_count.side_effect = store.get_unread_count
+        mock_db.mark_all_read.side_effect = store.mark_all_read
         mock_db_cls.return_value = mock_db
-        mock_db.mark_all_read.return_value = 25
 
-        res = self.client.post("/notifications/read-all", headers={"Authorization": f"Bearer {self.token}"})
+        # Verify initial global count is 72
+        res = self.client.get("/notifications/unread-count", headers=self.headers)
         self.assertEqual(res.status_code, 200)
-        self.assertTrue(res.json()["success"])
-        mock_db.mark_all_read.assert_called_with(user_id=self.user_id)
+        self.assertEqual(res.json()["unread_count"], 72)
+
+        # Mark all read
+        res_all = self.client.post("/notifications/read-all", headers=self.headers)
+        self.assertEqual(res_all.status_code, 200)
+        self.assertTrue(res_all.json()["success"])
+        self.assertEqual(res_all.json()["marked_read"], 72)
+
+        # Verify global count becomes 0
+        res_after = self.client.get("/notifications/unread-count", headers=self.headers)
+        self.assertEqual(res_after.status_code, 200)
+        self.assertEqual(res_after.json()["unread_count"], 0)
+
+        # Verify GET /notifications also returns 0 unread
+        res_list = self.client.get("/notifications?limit=25", headers=self.headers)
+        self.assertEqual(res_list.status_code, 200)
+        self.assertEqual(res_list.json()["unread_count"], 0)
+
+    @patch("api.routers.notifications.NotificationDatabase")
+    def test_case_6_limit_change_does_not_change_global_unread_count(self, mock_db_cls):
+        """Case 6: Changing pagination limit from 25 to other values does NOT change global unread_count."""
+        store = MockNotificationStore(self.user_id, total_count=100, unread_count=73)
+        mock_db = MagicMock()
+        mock_db.get_user_notifications.side_effect = store.get_user_notifications
+        mock_db.get_unread_count.side_effect = store.get_unread_count
+        mock_db_cls.return_value = mock_db
+
+        # Test limit=10
+        res_10 = self.client.get("/notifications?limit=10", headers=self.headers)
+        self.assertEqual(res_10.status_code, 200)
+        data_10 = res_10.json()
+        self.assertEqual(len(data_10["notifications"]), 10)
+        self.assertEqual(data_10["unread_count"], 73)
+
+        # Test limit=25
+        res_25 = self.client.get("/notifications?limit=25", headers=self.headers)
+        self.assertEqual(res_25.status_code, 200)
+        data_25 = res_25.json()
+        self.assertEqual(len(data_25["notifications"]), 25)
+        self.assertEqual(data_25["unread_count"], 73)
+
+        # Test limit=50
+        res_50 = self.client.get("/notifications?limit=50", headers=self.headers)
+        self.assertEqual(res_50.status_code, 200)
+        data_50 = res_50.json()
+        self.assertEqual(len(data_50["notifications"]), 50)
+        self.assertEqual(data_50["unread_count"], 73)
 
 
 if __name__ == "__main__":
