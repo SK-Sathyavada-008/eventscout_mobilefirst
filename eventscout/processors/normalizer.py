@@ -70,11 +70,14 @@ def parse_datetime_flexible(val: Any) -> Optional[datetime]:
         "%d %B %Y %H:%M",
         "%b %d, %Y",
         "%B %d, %Y",
+        "%a %b %d %Y",
         "%a, %b %d, %Y, %I:%M %p",
         "%a, %b %d, %I:%M %p",
         "%A, %B %d, %Y",
         "%m/%d/%Y %H:%M:%S",
         "%m/%d/%Y",
+        "%d/%m/%Y",
+        "%d/%m/%y",
     ]
     for fmt in formats:
         try:
@@ -83,13 +86,56 @@ def parse_datetime_flexible(val: Any) -> Optional[datetime]:
         except Exception:
             continue
 
-    # Fallback: Check for future date if relative (e.g., "In 2 days", "Tomorrow")
-    lower_val = val_str.lower()
     now = datetime.now(timezone.utc)
+
+    # Check for embedded date patterns like 'Mon Nov 25 2024' or 'Wed Oct 07 2026'
+    match_weekday_date = re.search(r"\b([A-Za-z]{3}\s+[A-Za-z]{3}\s+\d{1,2}\s+\d{4})\b", val_str)
+    if match_weekday_date:
+        try:
+            dt = datetime.strptime(match_weekday_date.group(1), "%a %b %d %Y")
+            return dt.replace(tzinfo=timezone.utc)
+        except Exception:
+            pass
+
+    # Check for embedded 'STARTS DD/MM/YY' or 'STARTS DD/MM/YYYY'
+    match_starts = re.search(r"STARTS?\s+(\d{1,2}/\d{1,2}/\d{2,4})", val_str, re.IGNORECASE)
+    if match_starts:
+        d_str = match_starts.group(1)
+        for d_fmt in ("%d/%m/%y", "%d/%m/%Y"):
+            try:
+                dt = datetime.strptime(d_str, d_fmt)
+                return dt.replace(tzinfo=timezone.utc)
+            except Exception:
+                pass
+
+    # Check for date ranges e.g. 'Jul 31 - Oct 01, 2026' or 'Aug 31 - Oct 23, 2026'
+    match_range = re.search(r"-\s*([A-Za-z]{3}\s+\d{1,2},\s*\d{4})", val_str)
+    if match_range:
+        try:
+            dt = datetime.strptime(match_range.group(1), "%b %d, %Y")
+            return dt.replace(tzinfo=timezone.utc)
+        except Exception:
+            pass
+
+    # Fallback: Check for future date if relative (e.g., "In 2 days", "Tomorrow", "9 days left", "about 1 month left")
+    lower_val = val_str.lower()
     if "tomorrow" in lower_val:
         return now + timedelta(days=1)
     if "today" in lower_val:
         return now
+
+    match_relative = re.search(r"(?:about\s+)?(\d+)\s+(day|days|week|weeks|month|months|hour|hours)\s+left", lower_val)
+    if match_relative:
+        num = int(match_relative.group(1))
+        unit = match_relative.group(2)
+        if "day" in unit:
+            return now + timedelta(days=num)
+        elif "week" in unit:
+            return now + timedelta(weeks=num)
+        elif "month" in unit:
+            return now + timedelta(days=num * 30)
+        elif "hour" in unit:
+            return now + timedelta(hours=num)
 
     # If all parsing fails, return a default future date (e.g. 7 days from now) with warning
     logger.warning("Unable to parse date string '%s'. Defaulting to 7 days from now.", val_str)
@@ -146,6 +192,27 @@ class EventNormalizer:
         # 5. Location / Mode
         mode_location = raw_item.get("mode_location") or raw_item.get("location") or "Online"
         mode_str = str(mode_location).strip()
+        if "\n" in mode_str:
+            lines = [l.strip() for l in mode_str.split("\n") if l.strip()]
+            found_mode = None
+            for l in lines:
+                l_lower = l.lower()
+                if "online" in l_lower or "virtual" in l_lower:
+                    found_mode = "Online"
+                    break
+                elif "hybrid" in l_lower:
+                    found_mode = "Hybrid"
+                    break
+                elif "in_person" in l_lower or "in-person" in l_lower or "offline" in l_lower:
+                    found_mode = "In-Person"
+                    break
+            mode_str = found_mode or (lines[0] if lines else "Online")
+        elif mode_str.upper() == "OFFLINE":
+            mode_str = "In-Person"
+        elif mode_str.upper() in ("ONLINE", "VIRTUAL"):
+            mode_str = "Online"
+        elif mode_str.upper() == "HYBRID":
+            mode_str = "Hybrid"
 
         # 6. Pricing
         is_free = raw_item.get("is_free", True)
@@ -189,6 +256,14 @@ class EventNormalizer:
         description = raw_item.get("description")
         if description:
             description = str(description).strip()
+            if description.startswith("http://") or description.startswith("https://"):
+                description = None
+
+        # If description is missing but source is a hackathon platform, provide informative technical fallback
+        if not description:
+            source_type = source_meta.get("source_type", "")
+            if "hackathon" in source_type.lower() or "hackathon" in source_name.lower():
+                description = f"Technical hackathon opportunity hosted on {source_name}."
 
         return Event(
             title=title,

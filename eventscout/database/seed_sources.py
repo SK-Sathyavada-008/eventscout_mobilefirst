@@ -16,16 +16,17 @@ PREDEFINED_SOURCES: List[Dict[str, Any]] = [
         "base_url": "https://devfolio.co/",
         "event_list_url": "https://devfolio.co/hackathons",
         "source_type": "hackathon_platform",
-        "status": "READY_FOR_REVIEW",
+        "status": "ENABLED",
         "collection_strategy": "PLAYWRIGHT",
         "configuration": {
             "target_url": "https://devfolio.co/hackathons",
-            "container_selector": "div[class*='HackathonCard'], div[class*='hackathon-card'], a[href*='devfolio.co']",
+            "container_selector": "div[class*='CompactHackathonCard'], div[class*='HackathonCard'], div[class*='hackathon-card']",
             "fields": {
-                "title": {"selector": "h3, h4, [class*='title']", "type": "text"},
-                "event_url": {"selector": "a", "type": "attribute", "attribute": "href"},
-                "date_time": {"selector": "[class*='date'], time", "type": "text"},
-                "description": {"selector": "p, [class*='desc']", "type": "text"},
+                "title": {"selector": "h1, h2, h3, h4, [class*='title'], strong", "type": "text"},
+                "event_url": {"selector": "a[href]", "type": "attribute", "attribute": "href"},
+                "date_time": {"selector": "[class*='date'], time, div", "type": "text"},
+                "description": {"selector": "self", "type": "text"},
+                "mode_location": {"selector": "div", "type": "text"},
                 "poster_image_url": {"selector": "img", "type": "attribute", "attribute": "src"},
             },
             "pagination": {"type": "scroll"},
@@ -60,12 +61,13 @@ PREDEFINED_SOURCES: List[Dict[str, Any]] = [
         "collection_strategy": "PLAYWRIGHT",
         "configuration": {
             "target_url": "https://hack2skill.com/",
-            "container_selector": "a[href*='hack2skill.com/event/'], a[href*='vision.hack2skill.com/event/'], a[href*='/hack/']",
+            "container_selector": "div.border.rounded-xl, div[class*='rounded-xl'][class*='border']",
             "fields": {
-                "title": {"selector": "self", "type": "text"},
-                "event_url": {"selector": "self", "type": "attribute", "attribute": "href"},
-                "date_time": {"selector": "self", "type": "text"},
-                "location": {"selector": "self", "type": "text"},
+                "title": {"selector": "h1, h2, h3, h4, h5, strong, [class*='title']", "type": "text"},
+                "event_url": {"selector": "a[href*='/event/'], a[href*='/hack/']", "type": "attribute", "attribute": "href"},
+                "date_time": {"selector": "div, p, span", "type": "text"},
+                "description": {"selector": "p, div", "type": "text"},
+                "mode_location": {"selector": "div, span", "type": "text"},
                 "poster_image_url": {"selector": "img", "type": "attribute", "attribute": "src"},
             },
             "pagination": {"type": "scroll"},
@@ -211,7 +213,7 @@ PREDEFINED_SOURCES: List[Dict[str, Any]] = [
         "base_url": "https://devpost.com/",
         "event_list_url": "https://devpost.com/hackathons",
         "source_type": "hackathon_platform",
-        "status": "READY_FOR_REVIEW",
+        "status": "ENABLED",
         "collection_strategy": "PLAYWRIGHT",
         "configuration": {
             "target_url": "https://devpost.com/hackathons",
@@ -221,7 +223,8 @@ PREDEFINED_SOURCES: List[Dict[str, Any]] = [
                 "event_url": {"selector": "a[href*='devpost.com']", "type": "attribute", "attribute": "href"},
                 "date_time": {"selector": "[class*='date'], [class*='submission-period']", "type": "text"},
                 "poster_image_url": {"selector": "img", "type": "attribute", "attribute": "src"},
-                "description": {"selector": "p", "type": "text"},
+                "description": {"selector": "div.tagline, div.challenge-description, [class*='description'], p", "type": "text"},
+                "mode_location": {"selector": "div.info, [class*='location']", "type": "text"},
             },
             "pagination": {"type": "scroll"},
         },
@@ -328,14 +331,20 @@ def seed_predefined_sources(source_db: SourceDatabase = None) -> int:
             seeded_count += 1
             logger.info("Seeded predefined source: %s (%s)", source["name"], doc["id"])
         else:
-            # If it already exists, ensure base_url, event_list_url, and name are updated if missing
+            # If it already exists, ensure base_url, event_list_url, source_type, configuration, and status are synced
             updates = {}
             if not existing.get("event_list_url") and source.get("event_list_url"):
                 updates["event_list_url"] = source["event_list_url"]
             if not existing.get("source_type") and source.get("source_type"):
                 updates["source_type"] = source["source_type"]
+            if source.get("configuration") and source["configuration"] != existing.get("configuration"):
+                updates["configuration"] = source["configuration"]
+            if source.get("status") == "ENABLED" and existing.get("status") != "ENABLED":
+                updates["status"] = "ENABLED"
+                updates["enabled"] = True
             if updates:
                 db.update_source(existing["id"], updates)
+                logger.info("Updated predefined source: %s with new config/status", source["name"])
 
     logger.info("Predefined source seeding check finished. %d new source(s) created.", seeded_count)
     return seeded_count

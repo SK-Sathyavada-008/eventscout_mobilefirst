@@ -114,7 +114,11 @@ class ScraperService:
                         continue
                     if self.deduplicator.is_duplicate(ev):
                         continue
-                    if self.tech_filter.is_technical_event(ev.title, ev.description or ""):
+                    is_tech, matched_cats = self.tech_filter.classify(ev.title, ev.description or "", ev.organizer or source_name)
+                    if is_tech:
+                        ev.is_technical = True
+                        if matched_cats and not ev.categories:
+                            ev.categories = matched_cats
                         tech_events.append(ev)
 
                 # 5. Upsert to MongoDB
