@@ -254,6 +254,14 @@ export default function EventDetailPage() {
     document.body.removeChild(link);
   };
 
+  const milestones = useMemo(() => {
+    return event ? getEventMilestones(event) : [];
+  }, [event]);
+
+  const dateRange = useMemo(() => {
+    return event ? formatDateRange(event.start_date || event.date_time, event.end_date) : null;
+  }, [event]);
+
   if (loading) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-8">
@@ -303,14 +311,6 @@ export default function EventDetailPage() {
     hour: "numeric",
     minute: "2-digit",
   });
-
-  const milestones = useMemo(() => {
-    return event ? getEventMilestones(event) : [];
-  }, [event]);
-
-  const dateRange = useMemo(() => {
-    return event ? formatDateRange(event.start_date || event.date_time, event.end_date) : null;
-  }, [event]);
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-2 pb-24">

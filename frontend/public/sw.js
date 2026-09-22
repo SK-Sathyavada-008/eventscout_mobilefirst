@@ -1,5 +1,5 @@
 // EventScout PWA Service Worker
-const CACHE_NAME = "eventscout-cache-v1";
+const CACHE_NAME = "eventscout-cache-v2";
 
 const PRECACHE_ASSETS = [
   "/",
@@ -113,8 +113,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 3. Fallback events JSON or public event API: Network-first, fallback to cache
-  if (url.pathname === "/fallback_events.json" || url.pathname.startsWith("/events")) {
+  // 3. Fallback events JSON: Network-first, fallback to cache
+  if (url.pathname === "/fallback_events.json") {
     event.respondWith(
       fetch(request)
         .then((networkResponse) => {
