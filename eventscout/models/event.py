@@ -44,6 +44,12 @@ class Event:
     is_technical: bool = True
     categories: List[str] = field(default_factory=list)
 
+    # Date, Deadlines & Timeline
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    registration_deadline: Optional[datetime] = None
+    submission_deadline: Optional[datetime] = None
+
     # Metadata
     scraped_at: str = field(default_factory=lambda: datetime.utcnow().isoformat() + "Z")
 
@@ -65,6 +71,8 @@ class Event:
     def to_dict(self) -> Dict[str, Any]:
         """Convert the Event instance into a JSON-serializable dictionary."""
         d = asdict(self)
-        if isinstance(self.date_time, datetime):
-            d["date_time"] = self.date_time.isoformat()
+        for dt_field in ("date_time", "start_date", "end_date", "registration_deadline", "submission_deadline"):
+            val = getattr(self, dt_field, None)
+            if isinstance(val, datetime):
+                d[dt_field] = val.isoformat()
         return d

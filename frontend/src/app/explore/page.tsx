@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Event } from "@/types/event";
 import EventCard from "@/components/EventCard";
+import TimelineView from "@/components/TimelineView";
 import { useAuth } from "@/contexts/AuthContext";
 import { isHackathon, isWorkshop, isConference } from "@/utils/eventUtils";
 import { matchLocationFilter, LOCATION_OPTIONS, LocationCategory } from "@/utils/locationUtils";
@@ -28,6 +29,7 @@ function ExploreContent() {
   const [selectedPrice, setSelectedPrice] = useState<string>("All");
   const [selectedSource, setSelectedSource] = useState<string>("All");
   const [sortBy, setSortBy] = useState<string>("recommended");
+  const [viewMode, setViewMode] = useState<"list" | "timeline">("list");
 
   // Modal bottom sheet states
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
@@ -309,23 +311,53 @@ function ExploreContent() {
         })}
       </div>
 
-      {/* Opportunities Count matching Screen 3 */}
+      {/* Opportunities Count & View Mode Toggle */}
       <div className="flex items-center justify-between mb-3 text-xs text-slate-400 flex-wrap gap-2">
-        <span className="font-semibold text-slate-300">
-          {filteredEvents.length} opportunities found
-        </span>
-        {selectedLocation !== "All" && (
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-950/70 border border-indigo-500/40 text-indigo-300 rounded-full text-xs font-semibold">
-            <span>📍 {selectedLocation}</span>
-            <button
-              onClick={() => setSelectedLocation("All")}
-              className="hover:text-white ml-0.5"
-              title="Clear location filter"
-            >
-              ✕
-            </button>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-slate-300">
+            {filteredEvents.length} opportunities found
+          </span>
+          {selectedLocation !== "All" && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-950/70 border border-indigo-500/40 text-indigo-300 rounded-full text-xs font-semibold">
+              <span>📍 {selectedLocation}</span>
+              <button
+                onClick={() => setSelectedLocation("All")}
+                className="hover:text-white ml-0.5"
+                title="Clear location filter"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* View Mode Toggle: List vs Timeline */}
+        <div className="flex items-center gap-1 bg-[#131b2e] border border-slate-800 p-0.5 rounded-xl">
+          <button
+            onClick={() => setViewMode("list")}
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+              viewMode === "list"
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "text-slate-400 hover:text-white"
+            }`}
+            title="List View"
+          >
+            <span>☰</span>
+            <span className="hidden sm:inline">List</span>
+          </button>
+          <button
+            onClick={() => setViewMode("timeline")}
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+              viewMode === "timeline"
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "text-slate-400 hover:text-white"
+            }`}
+            title="Timeline View"
+          >
+            <span>⏳</span>
+            <span>Timeline</span>
+          </button>
+        </div>
       </div>
 
       {/* Loading Skeletons */}
@@ -340,35 +372,45 @@ function ExploreContent() {
         </div>
       )}
 
-      {/* Event List (Vertical single column matching Screen 3) */}
+      {/* Event Content (List or Timeline) */}
       {!loading && !error && (
-        <div className="space-y-3">
-          {filteredEvents.map((ev) => (
-            <EventCard
-              key={ev.id || ev.title}
-              event={ev}
-              variant="compact"
-              isSaved={ev.id ? savedIds.has(ev.id) : false}
-              onToggleSave={isAuthenticated ? handleToggleSave : undefined}
+        <>
+          {viewMode === "timeline" ? (
+            <TimelineView
+              events={filteredEvents}
+              emptyTitle="No upcoming event milestones found"
+              emptySubtitle="Try adjusting your search criteria or switching filters to see upcoming deadlines."
             />
-          ))}
+          ) : (
+            <div className="space-y-3">
+              {filteredEvents.map((ev) => (
+                <EventCard
+                  key={ev.id || ev.title}
+                  event={ev}
+                  variant="compact"
+                  isSaved={ev.id ? savedIds.has(ev.id) : false}
+                  onToggleSave={isAuthenticated ? handleToggleSave : undefined}
+                />
+              ))}
 
-          {filteredEvents.length === 0 && (
-            <div className="bg-[#131b2e] border border-slate-800 rounded-3xl p-10 text-center">
-              <span className="text-4xl block mb-3">🔍</span>
-              <h3 className="text-lg font-bold text-white mb-1">No events found</h3>
-              <p className="text-slate-400 text-xs mb-5 max-w-xs mx-auto">
-                Try adjusting your search criteria or resetting filters.
-              </p>
-              <button
-                onClick={resetFilters}
-                className="py-2.5 px-5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md transition-colors"
-              >
-                Clear All Filters
-              </button>
+              {filteredEvents.length === 0 && (
+                <div className="bg-[#131b2e] border border-slate-800 rounded-3xl p-10 text-center">
+                  <span className="text-4xl block mb-3">🔍</span>
+                  <h3 className="text-lg font-bold text-white mb-1">No events found</h3>
+                  <p className="text-slate-400 text-xs mb-5 max-w-xs mx-auto">
+                    Try adjusting your search criteria or resetting filters.
+                  </p>
+                  <button
+                    onClick={resetFilters}
+                    className="py-2.5 px-5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md transition-colors"
+                  >
+                    Clear All Filters
+                  </button>
+                </div>
+              )}
             </div>
           )}
-        </div>
+        </>
       )}
 
       {/* Filter Bottom Sheet Modal */}
@@ -523,6 +565,9 @@ function ExploreContent() {
                   key={s.id}
                   onClick={() => {
                     setSortBy(s.id);
+                    if (s.id === "deadline") {
+                      setViewMode("timeline");
+                    }
                     setIsSortSheetOpen(false);
                   }}
                   className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-center justify-between ${

@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getEventClassification } from "@/utils/eventUtils";
 import { getEventId } from "@/components/EventCard";
 import EventDescription from "@/components/EventDescription";
+import { getEventMilestones, formatDateRange } from "@/utils/timelineUtils";
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -303,6 +304,14 @@ export default function EventDetailPage() {
     minute: "2-digit",
   });
 
+  const milestones = useMemo(() => {
+    return event ? getEventMilestones(event) : [];
+  }, [event]);
+
+  const dateRange = useMemo(() => {
+    return event ? formatDateRange(event.start_date || event.date_time, event.end_date) : null;
+  }, [event]);
+
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-2 pb-24">
       {/* Top Header Bar with Back, Share, Save */}
@@ -530,25 +539,56 @@ export default function EventDetailPage() {
         )}
 
         {activeTab === "timeline" && (
-          <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                1
-              </div>
-              <div>
-                <div className="font-bold text-white text-sm">Registration Deadline</div>
-                <div className="text-xs text-slate-400">Upcoming registration closing soon. Register early!</div>
-              </div>
+          <div className="space-y-6">
+            {/* Real Milestones Track */}
+            <div className="relative pl-6 sm:pl-8 border-l-2 border-indigo-500/30 ml-2 sm:ml-3 space-y-6 py-1">
+              {milestones.map((m, idx) => (
+                <div key={m.id} className="relative">
+                  {/* Step Node */}
+                  <div
+                    className={`absolute -left-[31px] sm:-left-[39px] top-0.5 w-6 h-6 rounded-full border flex items-center justify-center text-xs font-bold ${
+                      m.isPast
+                        ? "bg-slate-800 border-slate-700 text-slate-400"
+                        : "bg-indigo-600 border-indigo-400 text-white shadow-md shadow-indigo-600/30"
+                    }`}
+                  >
+                    {idx + 1}
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-white text-sm flex items-center gap-1.5">
+                        <span>{m.icon}</span>
+                        <span>{m.label}</span>
+                      </span>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${m.badgeStyle.bg} ${m.badgeStyle.text} ${m.badgeStyle.border}`}
+                      >
+                        {m.isPast ? "Closed / Past" : "Upcoming"}
+                      </span>
+                    </div>
+                    <div className="text-xs text-indigo-300 font-semibold mt-1">
+                      {m.formattedDate}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                2
+
+            {/* Date Range & Duration Highlight if multi-day */}
+            {dateRange && dateRange.includes("→") && (
+              <div className="bg-[#131b2e] border border-slate-800/90 rounded-2xl p-4 flex items-center gap-3 mt-4">
+                <span className="text-xl">📅</span>
+                <div>
+                  <div className="text-xs text-slate-400 uppercase font-bold tracking-wider">
+                    Full Event Schedule
+                  </div>
+                  <div className="text-sm font-bold text-white mt-0.5">
+                    {dateRange}
+                  </div>
+                </div>
               </div>
-              <div>
-                <div className="font-bold text-white text-sm">Event Date & Time</div>
-                <div className="text-xs text-slate-400">{formattedDate}</div>
-              </div>
-            </div>
+            )}
           </div>
         )}
 

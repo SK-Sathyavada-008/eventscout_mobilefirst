@@ -20,6 +20,12 @@ export interface Event {
   is_technical: boolean;
   categories: string[];
   scraped_at: string;
+
+  // Timeline & Deadlines
+  start_date?: string | null;
+  end_date?: string | null;
+  registration_deadline?: string | null;
+  submission_deadline?: string | null;
   
   // Intelligent Ranking & Host Reputation Fields
   ranking_score?: number;

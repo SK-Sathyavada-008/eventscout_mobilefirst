@@ -183,8 +183,8 @@ class RankingService:
         # -------------------------------------------------------------
         urgency_score = 0.40  # Default baseline
 
-        # Parse date_time or registration_deadline
-        deadline_raw = event.get("registration_deadline") or event.get("date_time")
+        # Parse date_time, registration_deadline, or submission_deadline
+        deadline_raw = event.get("registration_deadline") or event.get("submission_deadline") or event.get("date_time")
         target_dt = None
         if deadline_raw:
             if isinstance(deadline_raw, datetime):
@@ -279,7 +279,7 @@ class RankingService:
         if sort_by == "soonest":
             enriched.sort(key=lambda x: x.get("date_time") or "9999-12-31")
         elif sort_by == "deadline":
-            enriched.sort(key=lambda x: x.get("registration_deadline") or x.get("date_time") or "9999-12-31")
+            enriched.sort(key=lambda x: x.get("registration_deadline") or x.get("submission_deadline") or x.get("date_time") or "9999-12-31")
         elif sort_by == "newest":
             enriched.sort(key=lambda x: x.get("scraped_at") or x.get("created_at") or "", reverse=True)
         else:  # default 'recommended'

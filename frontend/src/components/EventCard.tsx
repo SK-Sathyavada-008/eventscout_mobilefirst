@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Event } from "@/types/event";
@@ -49,19 +49,42 @@ export default function EventCard({
 
   const hasValidImage = Boolean(event.poster_image_url && !isAvatar(event.poster_image_url));
 
-  const formattedDate = new Date(event.date_time).toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  const dateObj = event.date_time ? new Date(event.date_time) : null;
+  const isValidDate = Boolean(dateObj && !isNaN(dateObj.getTime()));
 
-  const shortDate = new Date(event.date_time).toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
+  const formattedDate = isValidDate
+    ? dateObj!.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : "Date TBA";
+
+  const shortDate = isValidDate
+    ? dateObj!.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      })
+    : "TBA";
+
+  const deadlineLabel = useMemo(() => {
+    if (event.registration_deadline) {
+      const d = new Date(event.registration_deadline);
+      if (!isNaN(d.getTime())) {
+        return `Closes ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+      }
+    }
+    if (event.submission_deadline) {
+      const d = new Date(event.submission_deadline);
+      if (!isNaN(d.getTime())) {
+        return `Due ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+      }
+    }
+    return null;
+  }, [event.registration_deadline, event.submission_deadline]);
 
   const isTopPick =
     (event.ranking_score && event.ranking_score >= 0.81) ||
@@ -164,6 +187,12 @@ export default function EventCard({
             {isTopPick && (
               <span className="bg-orange-500/20 text-orange-300 text-[10px] font-bold px-1.5 py-0.5 rounded-md">
                 ⭐ Top Pick
+              </span>
+            )}
+
+            {deadlineLabel && (
+              <span className="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-amber-500/30">
+                ⏳ {deadlineLabel}
               </span>
             )}
           </div>
@@ -284,9 +313,14 @@ export default function EventCard({
           </Link>
 
           <div className="text-xs text-slate-400 space-y-1 mb-3">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <span>📅</span>
               <span className="font-medium text-slate-300">{formattedDate}</span>
+              {deadlineLabel && (
+                <span className="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-amber-500/30">
+                  ⏳ {deadlineLabel}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-1.5 truncate">
               <span>📍</span>
@@ -375,8 +409,15 @@ export default function EventCard({
 
       {/* Body */}
       <div className="p-4 sm:p-5 flex flex-col flex-grow">
-        <div className="text-xs font-semibold text-indigo-400 mb-1.5 uppercase tracking-wide">
-          {formattedDate}
+        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+          <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wide">
+            {formattedDate}
+          </span>
+          {deadlineLabel && (
+            <span className="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-amber-500/30">
+              ⏳ {deadlineLabel}
+            </span>
+          )}
         </div>
 
         <Link href={`/events/${eventId}`}>

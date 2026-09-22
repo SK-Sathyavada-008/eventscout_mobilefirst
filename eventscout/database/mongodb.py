@@ -365,8 +365,9 @@ class EventDatabase:
                 doc["id"] = str(doc["_id"])
                 doc["_id"] = str(doc["_id"])
 
-            if isinstance(doc.get("date_time"), datetime):
-                doc["date_time"] = doc["date_time"].isoformat()
+            for dt_key in ("date_time", "start_date", "end_date", "registration_deadline", "submission_deadline"):
+                if isinstance(doc.get(dt_key), datetime):
+                    doc[dt_key] = doc[dt_key].isoformat()
 
             if "organizer" in doc and "organization" not in doc:
                 doc["organization"] = doc["organizer"]

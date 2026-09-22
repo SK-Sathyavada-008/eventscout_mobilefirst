@@ -5,7 +5,7 @@ Converts arbitrary raw dictionaries from dynamic collectors into standardized Ev
 import logging
 import re
 from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 from eventscout.models.event import Event
@@ -142,6 +142,44 @@ def parse_datetime_flexible(val: Any) -> Optional[datetime]:
     return now + timedelta(days=7)
 
 
+def parse_date_range(val_str: str) -> Tuple[Optional[datetime], Optional[datetime]]:
+    """
+    Parses date ranges like 'Jul 31 - Oct 01, 2026', 'Sep 28 to Oct 02, 2026',
+    or '28 - 30 Sep 2026' into aware UTC start and end datetimes.
+    """
+    if not val_str or not isinstance(val_str, str):
+        return None, None
+    s = val_str.strip()
+
+    # Pattern 1: 'Jul 31 - Oct 01, 2026' or 'Jul 31, 2026 - Oct 01, 2026' or 'Sep 28 – Sep 30, 2026'
+    m1 = re.search(r"([A-Za-z]{3}\s+\d{1,2}(?:,\s*\d{4})?)\s*(?:-|–|to)\s*([A-Za-z]{3}\s+\d{1,2},\s*\d{4})", s)
+    if m1:
+        start_part = m1.group(1).strip()
+        end_part = m1.group(2).strip()
+        try:
+            end_dt = datetime.strptime(end_part, "%b %d, %Y").replace(tzinfo=timezone.utc)
+            if "," not in start_part:
+                start_part = f"{start_part}, {end_dt.year}"
+            start_dt = datetime.strptime(start_part, "%b %d, %Y").replace(tzinfo=timezone.utc)
+            return start_dt, end_dt
+        except Exception:
+            pass
+
+    # Pattern 2: '28 - 30 Sep 2026' or '28 to 30 September 2026'
+    m2 = re.search(r"(\d{1,2})\s*(?:-|–|to)\s*(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})", s)
+    if m2:
+        d1, d2, mon, yr = m2.group(1), m2.group(2), m2.group(3), m2.group(4)
+        for fmt in ("%d %b %Y", "%d %B %Y"):
+            try:
+                start_dt = datetime.strptime(f"{d1} {mon} {yr}", fmt).replace(tzinfo=timezone.utc)
+                end_dt = datetime.strptime(f"{d2} {mon} {yr}", fmt).replace(tzinfo=timezone.utc)
+                return start_dt, end_dt
+            except Exception:
+                continue
+
+    return None, None
+
+
 class EventNormalizer:
     """
     Validates and normalizes raw event dicts into domain Event instances.
@@ -179,11 +217,48 @@ class EventNormalizer:
         if not event_url:
             return None
 
-        # 3. Date Time (Mandatory)
+        # 3. Date, End Date, Deadlines & Timeline
+        start_date = None
+        end_date = None
+        registration_deadline = None
+        submission_deadline = None
+
+        # Check explicit deadline / date fields in raw_item
+        raw_reg = raw_item.get("registration_deadline") or raw_item.get("registration_end") or raw_item.get("apply_by")
+        if raw_reg:
+            registration_deadline = parse_datetime_flexible(raw_reg)
+
+        raw_sub = raw_item.get("submission_deadline") or raw_item.get("submission_end") or raw_item.get("submit_by")
+        if raw_sub:
+            submission_deadline = parse_datetime_flexible(raw_sub)
+
+        raw_end = raw_item.get("end_date") or raw_item.get("endTime") or raw_item.get("end_time") or raw_item.get("endDate")
+        if raw_end:
+            end_date = parse_datetime_flexible(raw_end)
+
+        raw_start = raw_item.get("start_date") or raw_item.get("startDate") or raw_item.get("start_time")
+        if raw_start:
+            start_date = parse_datetime_flexible(raw_start)
+
+        # Inspect raw_dt for range or submission period
         raw_dt = raw_item.get("date_time") or raw_item.get("startDate") or raw_item.get("start_time") or raw_item.get("date")
-        date_time = parse_datetime_flexible(raw_dt)
+        if raw_dt and isinstance(raw_dt, str):
+            r_start, r_end = parse_date_range(raw_dt)
+            if r_start and r_end:
+                lower_dt_str = raw_dt.lower()
+                is_sub_period = "submission" in lower_dt_str or "hackathon" in source_name.lower() or "devpost" in source_name.lower()
+                if is_sub_period and not submission_deadline:
+                    start_date = start_date or r_start
+                    submission_deadline = r_end
+                else:
+                    start_date = start_date or r_start
+                    end_date = end_date or r_end
+
+        date_time = start_date or parse_datetime_flexible(raw_dt)
         if not date_time:
             date_time = datetime.now(timezone.utc) + timedelta(days=7)
+        if not start_date:
+            start_date = date_time
 
         # 4. Organizer
         organizer = raw_item.get("organizer") or raw_item.get("host") or source_name
@@ -283,6 +358,10 @@ class EventNormalizer:
             registration_url=registration_url,
             is_technical=is_technical,
             categories=categories,
+            start_date=start_date,
+            end_date=end_date,
+            registration_deadline=registration_deadline,
+            submission_deadline=submission_deadline,
         )
 
     def normalize_batch(self, raw_items: List[Dict[str, Any]], source_meta: Optional[Dict[str, Any]] = None) -> List[Event]:
