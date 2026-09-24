@@ -311,12 +311,18 @@ class EventDatabase:
         if mode and mode.strip() and mode.lower() != "all":
             m_lower = mode.strip().lower()
             if m_lower == "online":
-                conditions.append({"mode_location": {"$regex": "online", "$options": "i"}})
+                conditions.append({
+                    "$or": [
+                        {"mode": "online"},
+                        {"mode_location": {"$regex": "online", "$options": "i"}},
+                    ]
+                })
             elif m_lower in ["in-person", "offline"]:
                 conditions.append({
-                    "mode_location": {
-                        "$nin": ["Online", "online", "Virtual", "virtual"]
-                    }
+                    "$or": [
+                        {"mode": {"$in": ["offline", "in-person", "in_person"]}},
+                        {"mode_location": {"$regex": r"offline|in-person|in_person", "$options": "i"}},
+                    ]
                 })
 
         # 5. City / Location Filter
@@ -375,6 +381,17 @@ class EventDatabase:
                 doc["registrationUrl"] = doc["registration_url"]
             if "mode_location" in doc and "location" not in doc:
                 doc["location"] = doc["mode_location"]
+            if "mode" not in doc:
+                from eventscout.utils.location_utils import is_online_event
+                doc["mode"] = "online" if is_online_event(doc) else "offline"
+
+            if mode and mode.strip() and mode.lower() != "all":
+                from eventscout.utils.location_utils import is_online_event, is_offline_event
+                m_lower = mode.strip().lower()
+                if m_lower == "online" and not is_online_event(doc):
+                    continue
+                elif m_lower in ["in-person", "offline"] and not is_offline_event(doc):
+                    continue
 
             if location and location.strip() and location.lower() != "all":
                 if not match_location_filter(doc, location):

@@ -125,15 +125,21 @@ def parse_meetup_node(node: Dict[str, Any], index: int = 0) -> Optional[Event]:
     description = _clean_str(node.get("description"))
     source_event_id = _clean_str(node.get("id"))
 
+    mode = "online" if event_type == "ONLINE" else "offline"
+    country_clean = "India" if (venue_country and venue_country.lower() in ("in", "india")) else venue_country
+    location_str = "Online" if mode == "online" else (f"{venue_city or location_detail}, {country_clean}" if country_clean else (venue_city or location_detail))
+
     return Event(
         title=title,
         event_url=event_url,
         date_time=date_time_obj,
         organizer=organizer,
         source="meetup",
+        mode=mode,
         mode_location=mode_location,
+        location=location_str,
         city=venue_city,
-        country=venue_country,
+        country=country_clean,
         poster_image_url=poster_image_url,
         description=description,
         is_free=is_free,

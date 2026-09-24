@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 from eventscout.models.event import Event
+from eventscout.utils.location_utils import normalize_event_location
 
 logger = logging.getLogger("EventNormalizer")
 
@@ -264,30 +265,17 @@ class EventNormalizer:
         organizer = raw_item.get("organizer") or raw_item.get("host") or source_name
         organizer = str(organizer).strip() if organizer else source_name
 
-        # 5. Location / Mode
-        mode_location = raw_item.get("mode_location") or raw_item.get("location") or "Online"
-        mode_str = str(mode_location).strip()
-        if "\n" in mode_str:
-            lines = [l.strip() for l in mode_str.split("\n") if l.strip()]
-            found_mode = None
-            for l in lines:
-                l_lower = l.lower()
-                if "online" in l_lower or "virtual" in l_lower:
-                    found_mode = "Online"
-                    break
-                elif "hybrid" in l_lower:
-                    found_mode = "Hybrid"
-                    break
-                elif "in_person" in l_lower or "in-person" in l_lower or "offline" in l_lower:
-                    found_mode = "In-Person"
-                    break
-            mode_str = found_mode or (lines[0] if lines else "Online")
-        elif mode_str.upper() == "OFFLINE":
-            mode_str = "In-Person"
-        elif mode_str.upper() in ("ONLINE", "VIRTUAL"):
-            mode_str = "Online"
-        elif mode_str.upper() == "HYBRID":
-            mode_str = "Hybrid"
+        # 5. Location / Mode canonical normalization
+        # Ensures truthful classification, sanitizes scraper artifacts, and identifies Hyderabad / USA / India
+        loc_meta = normalize_event_location({
+            "mode_location": raw_item.get("mode_location"),
+            "location": raw_item.get("location"),
+            "city": raw_item.get("city"),
+            "country": raw_item.get("country"),
+            "title": title,
+            "source": source_name,
+            "event_url": event_url,
+        })
 
         # 6. Pricing
         is_free = raw_item.get("is_free", True)
@@ -346,9 +334,11 @@ class EventNormalizer:
             date_time=date_time,
             organizer=organizer,
             source=source_name.lower().replace(" ", "_"),
-            mode_location=mode_str,
-            city=raw_item.get("city"),
-            country=raw_item.get("country"),
+            mode=loc_meta["mode"],
+            mode_location=loc_meta["mode_location"],
+            location=loc_meta["location"],
+            city=loc_meta["city"],
+            country=loc_meta["country"],
             poster_image_url=poster_image_url,
             description=description,
             is_free=is_free,

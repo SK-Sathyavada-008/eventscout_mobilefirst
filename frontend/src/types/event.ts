@@ -6,6 +6,7 @@ export interface Event {
   date_time: string;
   organizer: string;
   source: string;
+  mode?: string;
   mode_location: string;
   location?: string | null;
   city: string | null;

@@ -23,7 +23,9 @@ class Event:
     source: str = "meetup"
 
     # Location & Attendance
+    mode: str = "online"
     mode_location: str = "Online"
+    location: Optional[str] = None
     city: Optional[str] = None
     country: Optional[str] = None
 

@@ -19,6 +19,8 @@ from api.main import app
 
 class TestEventsAPI(unittest.TestCase):
     def setUp(self):
+        import api.main
+        api.main._event_db = None
         self.client = TestClient(app)
         self.now = datetime.now(timezone.utc)
         self.future_date = self.now + timedelta(days=5)

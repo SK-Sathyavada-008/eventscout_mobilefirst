@@ -7,7 +7,7 @@ import EventCard from "@/components/EventCard";
 import TimelineView from "@/components/TimelineView";
 import { useAuth } from "@/contexts/AuthContext";
 import { isHackathon, isWorkshop, isConference } from "@/utils/eventUtils";
-import { matchLocationFilter, LOCATION_OPTIONS, LocationCategory } from "@/utils/locationUtils";
+import { matchLocationFilter, LOCATION_OPTIONS, LocationCategory, isOnlineEvent, isOfflineEvent } from "@/utils/locationUtils";
 
 function ExploreContent() {
   const searchParams = useSearchParams();
@@ -154,9 +154,8 @@ function ExploreContent() {
 
       // Mode filter
       if (selectedMode !== "All") {
-        const loc = (ev.mode_location || "").toLowerCase();
-        if (selectedMode === "Online" && !loc.includes("online")) return false;
-        if (selectedMode === "In-Person" && loc.includes("online")) return false;
+        if (selectedMode === "Online" && !isOnlineEvent(ev)) return false;
+        if (selectedMode === "In-Person" && !isOfflineEvent(ev)) return false;
       }
 
       // Location / Place filter

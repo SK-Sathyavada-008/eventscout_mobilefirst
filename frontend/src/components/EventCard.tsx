@@ -20,6 +20,19 @@ export function getEventId(event: Event): string {
   return event.id || event._id || encodeURIComponent(event.title.toLowerCase().replace(/[^a-z0-9]+/g, "-"));
 }
 
+export function formatDisplayLocation(event: Event): string {
+  const modeLoc = (event.mode_location || "").trim();
+  if (modeLoc.startsWith("http://") || modeLoc.startsWith("https://")) {
+    return event.city ? `${event.city}, ${event.country || "India"}` : "Online";
+  }
+  if (modeLoc.includes("\n")) {
+    return modeLoc.split("\n")[0].trim();
+  }
+  if (modeLoc) return modeLoc;
+  if (event.city) return event.country ? `${event.city}, ${event.country}` : event.city;
+  return "Online";
+}
+
 export default function EventCard({
   event,
   isSaved,
@@ -212,7 +225,7 @@ export default function EventCard({
           <div className="flex items-center gap-1.5 text-xs text-slate-400 truncate">
             <span>📍</span>
             <span className="truncate">
-              {event.mode_location || (event.city ? `${event.city}` : "Online")}
+              {formatDisplayLocation(event)}
             </span>
           </div>
         </div>
@@ -440,7 +453,7 @@ export default function EventCard({
         {/* Location */}
         <div className="text-xs text-slate-400 mb-3 flex items-center gap-1.5 truncate">
           <span>📍</span>
-          <span className="truncate">{event.mode_location || "Online"}</span>
+          <span className="truncate">{formatDisplayLocation(event)}</span>
         </div>
 
         {/* Action Buttons */}
