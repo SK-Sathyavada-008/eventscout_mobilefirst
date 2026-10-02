@@ -7,7 +7,7 @@
     "source": "meetup",
     "mode_location": "Offline - Hyderabad",
     "city": "Hyderabad",
-    "country": "in",
+    "country": "India",
     "poster_image_url": "https://secure.meetupstatic.com/photos/event/d/9/5/highres_535923477.jpeg",
     "description": "### From Embeddings to Search: Inside MongoDB Atlas Vector Search\n\nJoin **MongoDB User Group Hyderabad** for a technical session on **Semantic Search and MongoDB Atlas Vector Search**.\nExplore how **embeddings, vector search, architecture, and quantization** work together to build smarter and more efficient search experiences.\nPerfect for developers, AI/ML engineers, and anyone interested in **MongoDB and AI-powered applications**.\n\n🚀 **Learn. Build. Connect.**",
     "is_free": true,
@@ -20,7 +20,9 @@
       "Artificial Intelligence & Machine Learning",
       "Data & Databases"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231223Z"
+    "scraped_at": "2026-09-16T06:09:48.231223Z",
+    "mode": "offline",
+    "location": "Hyderabad, India"
   },
   {
     "title": "IN PERSON Apache Kafka® Meetup Hyderabad - Sep 2026",
@@ -30,7 +32,7 @@
     "source": "meetup",
     "mode_location": "Offline - Hyderabad",
     "city": "Hyderabad",
-    "country": "in",
+    "country": "India",
     "poster_image_url": "https://secure.meetupstatic.com/photos/event/1/0/e/5/highres_478624325.jpeg",
     "description": "Hello everyone! Join us for an **IN PERSON** Apache Kafka® meetup on Sep 27th from 11:00 am hosted by EPAM!\n\n\\*\\*\\*\n**Venue:**\nEPAM, Salarpuria Sattva Knowledge City, Plot [No. 2, Rai Durg, Hyderabad, Telangana 500032](https://www.google.com/maps/search/No.+2,+Rai+Durg,+Hyderabad,+Telangana+500032?entry=gmail&source=g)\n\nMap: [https://maps.app.goo.gl/J1dPXm9aam1xDMov9](https://urldefense.com/v3/__https://maps.app.goo.gl/J1dPXm9aam1xDMov9__;!!Ayb5sqE7!tPb0Vlr3XAsWDIvb24Oiav8rIH5feWXmbyXDAo5R5qmXCdEqxv4xYmj-a5HosHX9RyydU2W2RNlY5Z60R2ZLbOFSMium$)\n\n\\*\\*\\*\n**Agenda:**\n\n* 10:30: Doors Open\n* 11:00 AM to 11:10 AM: Welcome by Harsh Gulati\n* 11:10 AM to 11:50 AM: Bala Vignesh N V, Lead Software Engineer, Microsoft\n* 11:50 AM to 12:30 PM: Mohammed Ashfaq Ahmed, Senior Solutions Engineer, Confluent\n* 12:30 PM to 12:45 PM: Break\n* 12:45 PM to 13:25 PM: Jitin Chugh, Delivery Manager, EPAM\n* 13:25 PM to 14:30 PM: Lunch\n\n\\*\\*\\*\n**💡 Speaker:**\nMohammed Ashfaq Ahmed, Senior Solutions Engineer, Confluent\n\n**Talk:**\nKafka, Demystified: How Your Swiggy Order Reaches Everyone Who Needs It\n\n**Abstract:**\n**Topics covered:**\n\n1. Kafka Core — what Kafka actually is, and why not SQS/RabbitMQ\n2. Kafka Connect — getting data in and out without custom code\n3. Schema Registry — keeping everyone honest about the data shape\n4. Kafka Streams — computing things in real time\n5. Confluent Cloud — the same thing, fully managed\n\n\\-\\-\\-\\-\\-\n**💡 Speaker:**\nTBC\n\n**Talk:**\nTBC\n\n**Abstract:**\nTBC\n\n\\-\\-\\-\\-\\-\n**💡 Speaker:**\nTBC\n\n**Talk:**\nTBC\n\n**Abstract:**\nTBC\n\n\\*\\*\\*\nIf you would like to speak or host our next event please let us know! community@[confluent.io](http://confluent.io/)",
     "is_free": true,
@@ -42,7 +44,9 @@
     "categories": [
       "Data & Databases"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231253Z"
+    "scraped_at": "2026-09-16T06:09:48.231253Z",
+    "mode": "offline",
+    "location": "Hyderabad, India"
   },
   {
     "title": "Diffusion Models from First Principles: From Images to Video & Text",
@@ -52,7 +56,7 @@
     "source": "meetup",
     "mode_location": "Offline - Hyderabad",
     "city": "Hyderabad",
-    "country": "in",
+    "country": "India",
     "poster_image_url": "https://secure.meetupstatic.com/photos/event/e/8/6/2/highres_536099490.jpeg",
     "description": "Note: Mandatory to fill both RSVP and fill in the Google https://forms.gle/hgBmNo5NHNekVYvm7 no last minute exceptions will be possible without completing both these steps.\n\nBuild a Diffusion Model from Scratch on 6 GB VRAM \\| Image → Video → Audio → Text → Omni\n\nHow does a model learn to create an image, generate a video, produce text, or work across multiple modalities—starting from nothing but noise?\n\nIn this hands-on workshop, we will build an intuitive understanding of **diffusion models from first principles**, starting with the mathematics and fundamental idea of adding noise and learning to reverse that process.\n\nWe will then trace the **evolution of diffusion architectures**, from the early diffusion models to modern approaches used across **image, video, text, audio/multimodal, and Omni-generation systems**.\n\nWe’ll explore concepts such as:\n\n* Forward diffusion and the reverse denoising process\n* Noise schedules, timesteps, and denoising objectives\n* DDPM and DDIM\n* U-Net–based diffusion architectures\n* Latent Diffusion Models\n* Diffusion Transformers (DiT)\n* Flow Matching and modern diffusion/flow-based architectures\n* How diffusion evolved from image generation into video and multimodal generation\n* How modern Omni models combine multiple modalities within generative architectures\n\nThe workshop will conclude with a **live implementation of a diffusion model from scratch**—building the forward-noising process, neural network, training loop, and reverse-generation process ourselves.\n\nThe entire hands-on implementation will be designed to run on a **consumer GPU with just 6 GB of VRAM**, making it possible to understand diffusion without requiring expensive hardware.\n\n**From noise → mathematics → architecture → a working generative model.**",
     "is_free": true,
@@ -64,7 +68,9 @@
     "categories": [
       "Artificial Intelligence & Machine Learning"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231266Z"
+    "scraped_at": "2026-09-16T06:09:48.231266Z",
+    "mode": "offline",
+    "location": "Hyderabad, India"
   },
   {
     "title": "Context Layers for AI: Knowledge Graphs & Intelligent APIs",
@@ -72,9 +78,9 @@
     "date_time": "2026-09-27T10:00:00+05:30",
     "organizer": "SurrealDB Hyderabad",
     "source": "meetup",
-    "mode_location": "Offline - hyderabad",
-    "city": "hyderabad",
-    "country": "in",
+    "mode_location": "Offline - Hyderabad",
+    "city": "Hyderabad",
+    "country": "India",
     "poster_image_url": "https://secure.meetupstatic.com/photos/event/9/f/8/c/highres_535960844.jpeg",
     "description": "**Note - To sign up for this event, you must register and be approved here: https://luma.com/q1yzh1r3**\n\nYour AI app is only as smart as the data it can reach. Bolt a model onto a pile of disconnected tables and you get confident answers with nothing underneath them - an agent that can't tell you how it knows what it knows, and an API that hands back rows instead of insight.\n\n​Every team building with agents right now is solving the same problem: where does the data, its relationships and its meaning actually live, so an agent can recall what matters and an API can return answers rather than raw records?\n\n​We're teaming up with the Hyderabad GraphQL community for an evening on exactly that - knowledge graphs as the memory and context layer for AI with SurrealDB, and GraphQL APIs that use intelligent resolvers to deliver insight, not just data. Real talks, live demos, and time with engineers building on agents, graphs and modern APIs across the city.\n​\nRefreshments and plenty of time for networking.\n\n**Note - To sign up for this event, you must register and be approved here: https://luma.com/q1yzh1r3**",
     "is_free": true,
@@ -87,7 +93,9 @@
       "Artificial Intelligence & Machine Learning",
       "Software & Web Development"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231287Z"
+    "scraped_at": "2026-09-16T06:09:48.231287Z",
+    "mode": "offline",
+    "location": "Hyderabad, India"
   },
   {
     "title": "Learn Excel from A to Z: Beginner to Job-Ready, Live",
@@ -109,7 +117,9 @@
     "categories": [
       "Data & Databases"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231296Z"
+    "scraped_at": "2026-09-16T06:09:48.231296Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Robotics summer camp 2K16",
@@ -119,7 +129,7 @@
     "source": "meetup",
     "mode_location": "Offline - Hyderabad",
     "city": "Hyderabad",
-    "country": "in",
+    "country": "India",
     "poster_image_url": "https://secure.meetupstatic.com/photos/event/a/2/b/b/highres_433841659.jpeg",
     "description": "The student gets acquainted with various concepts of Physics, Electronics and would have a thorough understanding of DC motors, electronic components, circuit design etc.\n\nROBOTICS SUMMER CAMP 2K16(Monday to Friday)\n\nAge group:\n\nLevel-1 (7 to 11 years)\nLevel-2 (12 to 16 years)\n\nTimings:\n\nMorning session – 09:30 to 12:30\n\nNoon session – 14:30 to 17:30\n\nCourse details:\n\n5-days camp (two take away projects) – 2000 INR\n\nCourse content:\n\nIntroduction to machines & robots\n\nBasic of robotics\n\nBasic electronics\n\nHands on with the appropriate manipulative\n\nMini & Major project(take away)\n\nCraftwork",
     "is_free": false,
@@ -131,7 +141,9 @@
     "categories": [
       "Emerging Tech & Hardware"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231318Z"
+    "scraped_at": "2026-09-16T06:09:48.231318Z",
+    "mode": "offline",
+    "location": "Hyderabad, India"
   },
   {
     "title": "weekend Robotics",
@@ -141,7 +153,7 @@
     "source": "meetup",
     "mode_location": "Offline - Hyderabad",
     "city": "Hyderabad",
-    "country": "in",
+    "country": "India",
     "poster_image_url": "https://secure.meetupstatic.com/photos/event/a/2/b/b/highres_433841659.jpeg",
     "description": "The student gets acquainted with various concepts of Physics, Electronics and would have a thorough understanding of DC motors, electronic components, circuit design etc.\n\nRobotics course ( ONLY ON WEEKENDS)\n\nDetails:\n\n(2nd to 12th grade)​​​​​​\n\n-It is a 12 session course.\n\n-Each session is for two hours.\n\n-Batch timings 09-11,11-13,14-16,16-18\n\n-Classes on Saturday and Sundays.\n\n-Fee is Rs 4800 INR\n\n-One on One training session.\n\n-Extended curriculum would be designed based on the student's progress and interest after completion of his 12 session course.",
     "is_free": false,
@@ -153,7 +165,9 @@
     "categories": [
       "Emerging Tech & Hardware"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231327Z"
+    "scraped_at": "2026-09-16T06:09:48.231327Z",
+    "mode": "offline",
+    "location": "Hyderabad, India"
   },
   {
     "title": "Agentic AI Multimodal MonthlyMixer - Where Agents Minds Meet",
@@ -176,7 +190,9 @@
       "Artificial Intelligence & Machine Learning",
       "Data & Databases"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231337Z"
+    "scraped_at": "2026-09-16T06:09:48.231337Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Generative AI: From Fundamentals to AWS",
@@ -200,7 +216,9 @@
       "Cloud & DevOps",
       "Software & Web Development"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231361Z"
+    "scraped_at": "2026-09-16T06:09:48.231361Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "From Curiosity to Career | A Beginner’s Guide to DevOps",
@@ -222,7 +240,9 @@
     "categories": [
       "Cloud & DevOps"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231369Z"
+    "scraped_at": "2026-09-16T06:09:48.231369Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Data Analytic Group September 2026 : Building Smarter with Microsoft Fabric IQ",
@@ -244,7 +264,9 @@
     "categories": [
       "Artificial Intelligence & Machine Learning"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231385Z"
+    "scraped_at": "2026-09-16T06:09:48.231385Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Nepal Cloud Meetup- Sept 2026",
@@ -266,7 +288,9 @@
     "categories": [
       "Cloud & DevOps"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231393Z"
+    "scraped_at": "2026-09-16T06:09:48.231393Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "ResearchersConnect: Global Virtual Job & Networking Event for Researchers",
@@ -289,7 +313,9 @@
       "Artificial Intelligence & Machine Learning",
       "Data & Databases"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231400Z"
+    "scraped_at": "2026-09-16T06:09:48.231400Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Build Ai Agents",
@@ -312,7 +338,9 @@
       "Artificial Intelligence & Machine Learning",
       "Software & Web Development"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231408Z"
+    "scraped_at": "2026-09-16T06:09:48.231408Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Google Map Software Architecture",
@@ -334,7 +362,9 @@
     "categories": [
       "DSA & Competitive Programming"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231416Z"
+    "scraped_at": "2026-09-16T06:09:48.231416Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "AWS Student Builder Group SUSL Kickoff: Connect, Learn & Build",
@@ -358,7 +388,9 @@
       "Cloud & DevOps",
       "Cybersecurity"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231423Z"
+    "scraped_at": "2026-09-16T06:09:48.231423Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Delhi - NCR - Build Your First AI Agent - No Code, Just Execution",
@@ -381,7 +413,9 @@
       "Artificial Intelligence & Machine Learning",
       "Software & Web Development"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231433Z"
+    "scraped_at": "2026-09-16T06:09:48.231433Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Introduction to Qiskit Programming",
@@ -404,7 +438,9 @@
       "DSA & Competitive Programming",
       "Software & Web Development"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231442Z"
+    "scraped_at": "2026-09-16T06:09:48.231442Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "From Automation to Autonomy: Agentic AI Workflows for Mid-Market Efficiency",
@@ -426,7 +462,9 @@
     "categories": [
       "Artificial Intelligence & Machine Learning"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231449Z"
+    "scraped_at": "2026-09-16T06:09:48.231449Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "The Bedrock Console, End to End: Discover, Build, Assess, Configure",
@@ -449,7 +487,9 @@
       "Artificial Intelligence & Machine Learning",
       "Cloud & DevOps"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231463Z"
+    "scraped_at": "2026-09-16T06:09:48.231463Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Introduction to Cloud Services with AWS",
@@ -471,7 +511,9 @@
     "categories": [
       "Cloud & DevOps"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231473Z"
+    "scraped_at": "2026-09-16T06:09:48.231473Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Google Agents in Production for Enterprises (Virtual) - Ep 1",
@@ -494,7 +536,9 @@
       "Artificial Intelligence & Machine Learning",
       "Cloud & DevOps"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231488Z"
+    "scraped_at": "2026-09-16T06:09:48.231488Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "AWS Cloud Sprint League 1: Cloud Foundations",
@@ -516,7 +560,9 @@
     "categories": [
       "Cloud & DevOps"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231495Z"
+    "scraped_at": "2026-09-16T06:09:48.231495Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Workforce Compliance and Time Fraud Detection reporting using PowerBI",
@@ -538,7 +584,9 @@
     "categories": [
       "Artificial Intelligence & Machine Learning"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231508Z"
+    "scraped_at": "2026-09-16T06:09:48.231508Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Build an Agentic Invoice Verification Process with UiPath Maestro Flow",
@@ -560,7 +608,9 @@
     "categories": [
       "Artificial Intelligence & Machine Learning"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231520Z"
+    "scraped_at": "2026-09-16T06:09:48.231520Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "AWS Cloud AI Engineer Job Readiness Program – Becoming Interview Ready",
@@ -584,7 +634,9 @@
       "Cloud & DevOps",
       "Data & Databases"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231529Z"
+    "scraped_at": "2026-09-16T06:09:48.231529Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "How To Build A Community- Discussion",
@@ -606,7 +658,9 @@
     "categories": [
       "Artificial Intelligence & Machine Learning"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231538Z"
+    "scraped_at": "2026-09-16T06:09:48.231538Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Implement End-to-End Security Controls for Cloud and AI Workloads",
@@ -629,7 +683,9 @@
       "Artificial Intelligence & Machine Learning",
       "Cybersecurity"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231545Z"
+    "scraped_at": "2026-09-16T06:09:48.231545Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "The AI Reliability Problem: Can We Trust AI to Deliver Consistently?",
@@ -652,7 +708,9 @@
       "Artificial Intelligence & Machine Learning",
       "Emerging Tech & Hardware"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231553Z"
+    "scraped_at": "2026-09-16T06:09:48.231553Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Enterprise AI infrastructure in 2026: A reality check for platform engineers",
@@ -677,7 +735,9 @@
       "Data & Databases",
       "Software & Web Development"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231566Z"
+    "scraped_at": "2026-09-16T06:09:48.231566Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Quantum Gates & Usage",
@@ -700,7 +760,9 @@
       "Artificial Intelligence & Machine Learning",
       "DSA & Competitive Programming"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231574Z"
+    "scraped_at": "2026-09-16T06:09:48.231574Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "How to build an agent-ready IDP with open source tools",
@@ -725,7 +787,9 @@
       "Open Source & Hackathons",
       "Software & Web Development"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231581Z"
+    "scraped_at": "2026-09-16T06:09:48.231581Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Sept 24 - AI, ML and Computer Vision Meetup",
@@ -747,7 +811,9 @@
     "categories": [
       "Artificial Intelligence & Machine Learning"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231594Z"
+    "scraped_at": "2026-09-16T06:09:48.231594Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "AnalyticsCLUB JobExpo Virtual Business, Data & Technology Job Expo",
@@ -770,7 +836,9 @@
       "Artificial Intelligence & Machine Learning",
       "Data & Databases"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231602Z"
+    "scraped_at": "2026-09-16T06:09:48.231602Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Handling Real Time data in Fabric Eventhouse",
@@ -794,7 +862,9 @@
       "Data & Databases",
       "Emerging Tech & Hardware"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231613Z"
+    "scraped_at": "2026-09-16T06:09:48.231613Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Building APIs Faster with Agentic Development and Azure Cosmos DB",
@@ -818,7 +888,9 @@
       "Cloud & DevOps",
       "Software & Web Development"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231624Z"
+    "scraped_at": "2026-09-16T06:09:48.231624Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Sri Lankan Microsoft Biz Apps Monthly Meetup - October 2026",
@@ -840,7 +912,9 @@
     "categories": [
       "Artificial Intelligence & Machine Learning"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231635Z"
+    "scraped_at": "2026-09-16T06:09:48.231635Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Proactive Data Quality Engineering for Fabric Healthcare Data Pipelines",
@@ -863,7 +937,9 @@
       "Artificial Intelligence & Machine Learning",
       "Data & Databases"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231645Z"
+    "scraped_at": "2026-09-16T06:09:48.231645Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Everything you need to know about managing AI spend in 2026",
@@ -885,7 +961,9 @@
     "categories": [
       "Artificial Intelligence & Machine Learning"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231657Z"
+    "scraped_at": "2026-09-16T06:09:48.231657Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "MCP - From Conversation to Action",
@@ -908,7 +986,9 @@
       "Artificial Intelligence & Machine Learning",
       "Software & Web Development"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231668Z"
+    "scraped_at": "2026-09-16T06:09:48.231668Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "AWS SBG MSIT ORIENTATION 2026",
@@ -930,7 +1010,9 @@
     "categories": [
       "Cloud & DevOps"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231690Z"
+    "scraped_at": "2026-09-16T06:09:48.231690Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "September PythonPune Meetup 2026",
@@ -953,7 +1035,9 @@
       "Open Source & Hackathons",
       "Software & Web Development"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231700Z"
+    "scraped_at": "2026-09-16T06:09:48.231700Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Orchestrate Everything: Online Data Engineering Conference",
@@ -976,7 +1060,9 @@
       "Artificial Intelligence & Machine Learning",
       "Data & Databases"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231710Z"
+    "scraped_at": "2026-09-16T06:09:48.231710Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Build Your First AI App for Free",
@@ -999,7 +1085,9 @@
       "Artificial Intelligence & Machine Learning",
       "Software & Web Development"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231717Z"
+    "scraped_at": "2026-09-16T06:09:48.231717Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "AI Products at Manufacturing Plants",
@@ -1021,7 +1109,9 @@
     "categories": [
       "Artificial Intelligence & Machine Learning"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231725Z"
+    "scraped_at": "2026-09-16T06:09:48.231725Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Webinar: 6 Use Cases You Didn't Think Possible on the Data Lake",
@@ -1046,7 +1136,9 @@
       "Data & Databases",
       "Software & Web Development"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231734Z"
+    "scraped_at": "2026-09-16T06:09:48.231734Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "CloudBuild AI: Virtual Build-a-Thon (Powered by Amazon Q & Kiro)",
@@ -1069,7 +1161,9 @@
       "Artificial Intelligence & Machine Learning",
       "Cloud & DevOps"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231742Z"
+    "scraped_at": "2026-09-16T06:09:48.231742Z",
+    "mode": "online",
+    "location": "Online"
   },
   {
     "title": "Oct 8 - MCP, Agents and Skills Meetup Meetup",
@@ -1091,6 +1185,8 @@
     "categories": [
       "Artificial Intelligence & Machine Learning"
     ],
-    "scraped_at": "2026-09-16T06:09:48.231756Z"
+    "scraped_at": "2026-09-16T06:09:48.231756Z",
+    "mode": "online",
+    "location": "Online"
   }
 ]

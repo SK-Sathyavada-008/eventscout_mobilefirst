@@ -178,9 +178,11 @@ def main():
     # Normalize JSON fallback files
     json_path1 = REPO_ROOT / "data" / "events.json"
     json_path2 = REPO_ROOT / "frontend" / "public" / "fallback_events.json"
+    json_path3 = REPO_ROOT / "eventscout" / "data" / "events.json"
 
     normalize_json_file(json_path1)
     normalize_json_file(json_path2)
+    normalize_json_file(json_path3)
 
     print("\n" + "=" * 70)
     print(f"MIGRATION APPLIED SUCCESSFULLY! {applied_count} records updated in MongoDB.")

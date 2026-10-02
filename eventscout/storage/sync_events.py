@@ -43,13 +43,18 @@ def sync_events_json_to_mongo():
             else:
                 continue
 
+            loc_val = item.get("location") or item.get("mode_location") or "Online"
+            mode_val = item.get("mode") or ("online" if (item.get("mode_location") or "").lower() == "online" else "offline")
+
             event = Event(
                 title=item.get("title", ""),
                 event_url=item.get("event_url", ""),
                 date_time=dt,
                 organizer=item.get("organizer", ""),
                 source=item.get("source", "meetup"),
+                mode=mode_val,
                 mode_location=item.get("mode_location", "Online"),
+                location=loc_val,
                 city=item.get("city"),
                 country=item.get("country"),
                 poster_image_url=item.get("poster_image_url"),

@@ -217,6 +217,8 @@ class EventDatabase:
                 doc["registrationUrl"] = doc["registration_url"]
             if "mode_location" in doc and "location" not in doc:
                 doc["location"] = doc["mode_location"]
+            if "location" in doc and ("mode_location" not in doc or not doc.get("mode_location")):
+                doc["mode_location"] = doc["location"]
 
             active_events.append(doc)
 
@@ -381,6 +383,8 @@ class EventDatabase:
                 doc["registrationUrl"] = doc["registration_url"]
             if "mode_location" in doc and "location" not in doc:
                 doc["location"] = doc["mode_location"]
+            if "location" in doc and ("mode_location" not in doc or not doc.get("mode_location")):
+                doc["mode_location"] = doc["location"]
             if "mode" not in doc:
                 from eventscout.utils.location_utils import is_online_event
                 doc["mode"] = "online" if is_online_event(doc) else "offline"

@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { Event } from "@/types/event";
 import { buildTimelineGroups, TimelineDateGroup } from "@/utils/timelineUtils";
-import { getEventId } from "@/components/EventCard";
+import { getEventId, formatDisplayLocation } from "@/components/EventCard";
 import { getEventClassification } from "@/utils/eventUtils";
 
 interface TimelineViewProps {
@@ -141,10 +141,16 @@ export default function TimelineView({
                     )}
 
                     {/* Mode / Location */}
-                    <span className="flex items-center gap-1 text-slate-400">
-                      <span>{item.event.mode_location?.toLowerCase().includes("online") ? "🌐" : "📍"}</span>
-                      <span className="truncate max-w-[140px]">{item.event.mode_location || "Online"}</span>
-                    </span>
+                    {(() => {
+                      const displayLoc = formatDisplayLocation(item.event);
+                      const isOnline = displayLoc.toLowerCase().includes("online");
+                      return (
+                        <span className="flex items-center gap-1 text-slate-400">
+                          <span>{isOnline ? "🌐" : "📍"}</span>
+                          <span className="truncate max-w-[140px]">{displayLoc}</span>
+                        </span>
+                      );
+                    })()}
 
                     {/* Date Range if multi-day or different from current milestone */}
                     {item.dateRangeDisplay && item.dateRangeDisplay.includes("→") && (

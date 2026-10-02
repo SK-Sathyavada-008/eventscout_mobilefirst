@@ -186,6 +186,14 @@ class PlaywrightCollector(BaseCollector):
                                             val = d_text
                                             break
 
+                                elif field_name in ("mode_location", "location", "venue", "city"):
+                                    loc_candidates = card.query_selector_all("[class*='location'], [class*='venue'], [class*='city'], [class*='place'], [class*='address'], [data-testid*='location']")
+                                    for loc_el in loc_candidates:
+                                        l_text = (loc_el.inner_text() or "").strip()
+                                        if l_text and not l_text.lower().startswith("http") and len(l_text) < 150:
+                                            val = l_text
+                                            break
+
                             if val is None:
                                 val = default_val
 
@@ -205,6 +213,15 @@ class PlaywrightCollector(BaseCollector):
                         # If date_time looks like a URL, clear it so normalizer can assign default
                         if event_data.get("date_time") and str(event_data.get("date_time")).lower().startswith("http"):
                             event_data["date_time"] = None
+
+                        # If location / mode_location is not yet found, attempt extraction from card
+                        if not event_data.get("mode_location") and not event_data.get("location"):
+                            loc_candidates = card.query_selector_all("[class*='location'], [class*='venue'], [class*='city'], [class*='place'], [class*='address'], [data-testid*='location']")
+                            for loc_el in loc_candidates:
+                                l_text = (loc_el.inner_text() or "").strip()
+                                if l_text and not l_text.lower().startswith("http") and len(l_text) < 150:
+                                    event_data["mode_location"] = l_text
+                                    break
 
                         # Ensure valid event_url exists
                         if not event_data.get("event_url"):

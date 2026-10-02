@@ -238,7 +238,7 @@ export default function EventDetailPage() {
       `DTSTART:${start}`,
       `SUMMARY:${event.title}`,
       `DESCRIPTION:${event.description || "View full details on EventScout."}`,
-      `LOCATION:${event.mode_location || "Online"}`,
+      `LOCATION:${event.location || event.mode_location || "Online"}`,
       `URL:${event.registration_url || event.event_url || ""}`,
       "END:VEVENT",
       "END:VCALENDAR"
@@ -431,7 +431,7 @@ export default function EventDetailPage() {
           </div>
           <div>
             <div className="text-[11px] text-slate-400 uppercase font-semibold">Location / Venue</div>
-            <div className="font-bold text-white">{event.mode_location || "Online"}</div>
+            <div className="font-bold text-white">{event.location || event.mode_location || "Online"}</div>
           </div>
         </div>
 

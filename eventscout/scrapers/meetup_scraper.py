@@ -97,11 +97,13 @@ def _print_events_summary(events: List[Event]) -> None:
             price_display = f"{amount:.2f} {currency}".strip() if amount is not None else f"Paid ({currency})".strip()
 
         categories_str = ", ".join(event.categories) if event.categories else "General Tech"
+        loc_display = event.location or event.mode_location or "Online"
 
         print(f"{i}. {_safe_str(event.title)}")
         print(f"   Date:       {_safe_str(date_display)}")
         print(f"   Organizer:  {_safe_str(event.organizer)}")
         print(f"   Categories: {_safe_str(categories_str)}")
+        print(f"   Location:   {_safe_str(loc_display)}")
         print(f"   Mode:       {_safe_str(event.mode_location)}")
         print(f"   Price:      {_safe_str(price_display)}")
         print(f"   URL:        {_safe_str(event.event_url)}")
@@ -157,10 +159,11 @@ def scrape_meetup_events(
     rejected_non_technical = 0
 
     for event in raw_events:
-        # User request: Keep only Hyderabad and Online events
         if event.mode_location != "Online":
             city = (event.city or "").lower()
-            if "hyderabad" not in city:
+            mode_loc = (event.mode_location or "").lower()
+            loc_str = (event.location or "").lower()
+            if "hyderabad" not in city and "hyderabad" not in mode_loc and "hyderabad" not in loc_str:
                 continue
 
         is_tech, categories = tech_filter.classify(

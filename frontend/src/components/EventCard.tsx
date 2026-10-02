@@ -21,6 +21,10 @@ export function getEventId(event: Event): string {
 }
 
 export function formatDisplayLocation(event: Event): string {
+  const loc = (event.location || "").trim();
+  if (loc && loc !== "Other / Unknown" && !loc.startsWith("http://") && !loc.startsWith("https://")) {
+    return loc.includes("\n") ? loc.split("\n")[0].trim() : loc;
+  }
   const modeLoc = (event.mode_location || "").trim();
   if (modeLoc.startsWith("http://") || modeLoc.startsWith("https://")) {
     return event.city ? `${event.city}, ${event.country || "India"}` : "Online";
@@ -28,8 +32,11 @@ export function formatDisplayLocation(event: Event): string {
   if (modeLoc.includes("\n")) {
     return modeLoc.split("\n")[0].trim();
   }
-  if (modeLoc) return modeLoc;
+  if (modeLoc && modeLoc !== "Location not specified") return modeLoc;
   if (event.city) return event.country ? `${event.city}, ${event.country}` : event.city;
+  if (loc === "Other / Unknown" || modeLoc === "Location not specified") {
+    return "Location not specified";
+  }
   return "Online";
 }
 
@@ -337,7 +344,7 @@ export default function EventCard({
             </div>
             <div className="flex items-center gap-1.5 truncate">
               <span>📍</span>
-              <span className="truncate">{event.mode_location || "Online"}</span>
+              <span className="truncate">{formatDisplayLocation(event)}</span>
             </div>
           </div>
 
