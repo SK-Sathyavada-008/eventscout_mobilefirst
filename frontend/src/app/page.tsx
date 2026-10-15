@@ -74,12 +74,35 @@ export default function DiscoverPage() {
         if (!res.ok) throw new Error("Failed to load events from server.");
 
         const data = await res.json();
-        setEvents(data);
+        let combined = Array.isArray(data) ? [...data] : [];
+
+        // Always merge with bundled fallback events so local Hyderabad flagship events (like DevFest)
+        // are never missing if the backend database hasn't finished syncing yet
+        try {
+          const fallbackRes = await fetch(`/fallback_events.json?v=${Date.now()}`);
+          if (fallbackRes.ok) {
+            const fallbackData = await fallbackRes.json();
+            if (Array.isArray(fallbackData)) {
+              const existingUrls = new Set(
+                combined.map((e) => (e.event_url || e.source_event_id || e.id || e.title || "").toLowerCase().trim())
+              );
+              for (const fb of fallbackData) {
+                const key = (fb.event_url || fb.source_event_id || fb.id || fb.title || "").toLowerCase().trim();
+                if (key && !existingUrls.has(key)) {
+                  combined.push(fb);
+                  existingUrls.add(key);
+                }
+              }
+            }
+          }
+        } catch {}
+
+        setEvents(combined);
         setError(null);
 
         // Cache events locally for offline support
         if (typeof window !== "undefined") {
-          localStorage.setItem("eventscout_cached_events", JSON.stringify(data));
+          localStorage.setItem("eventscout_cached_events", JSON.stringify(combined));
         }
       } catch (err: any) {
         if (cancelled) return;

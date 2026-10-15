@@ -55,6 +55,10 @@ class Event:
     # Metadata
     scraped_at: str = field(default_factory=lambda: datetime.utcnow().isoformat() + "Z")
 
+    def __post_init__(self):
+        if not self.source_event_id:
+            self.source_event_id = self.event_url
+
     def __getitem__(self, key: str) -> Any:
         """Enables dictionary-style indexing e.g. event['title']."""
         try:
@@ -73,8 +77,11 @@ class Event:
     def to_dict(self) -> Dict[str, Any]:
         """Convert the Event instance into a JSON-serializable dictionary."""
         d = asdict(self)
+        if not d.get("source_event_id"):
+            d["source_event_id"] = self.event_url
         for dt_field in ("date_time", "start_date", "end_date", "registration_deadline", "submission_deadline"):
             val = getattr(self, dt_field, None)
             if isinstance(val, datetime):
                 d[dt_field] = val.isoformat()
         return d
+
