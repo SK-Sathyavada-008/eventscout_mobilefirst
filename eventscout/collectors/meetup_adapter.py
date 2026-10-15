@@ -18,11 +18,17 @@ class MeetupCollectorAdapter(BaseCollector):
     """
 
     def collect(self, max_pages: int = 3) -> List[Dict[str, Any]]:
-        logger.info("[Meetup] Executing specialized GraphQL interceptor adapter (max_pages=%d)...", max_pages)
+        target_url = (
+            self.config.get("target_url")
+            or self.source.get("event_list_url")
+            or "https://www.meetup.com/find/?location=in--hyderabad&categoryId=546&source=EVENTS"
+        )
+        logger.info("[Meetup] Executing specialized GraphQL interceptor adapter (target=%s, max_pages=%d)...", target_url, max_pages)
         try:
             active_events, metrics = scrape_meetup_events(
                 max_pages=max_pages,
                 return_metrics=True,
+                target_url=target_url,
             )
             # Convert Event objects to dicts for standard pipeline processing
             raw_dicts = []

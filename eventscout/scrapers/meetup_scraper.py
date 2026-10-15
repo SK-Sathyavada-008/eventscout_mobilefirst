@@ -124,6 +124,7 @@ def scrape_meetup_events(
     output_file: Optional[str] = None,
     max_pages: int = 4,
     return_metrics: bool = False,
+    target_url: Optional[str] = None,
 ) -> Any:
     """
     Main scraper and pipeline function for Meetup event listings.
@@ -145,7 +146,7 @@ def scrape_meetup_events(
     print("[3/8] Intercepting GraphQL responses from Meetup (gql2)...")
     print(f"[4/8] Collecting event batches via scroll pagination (max {max_pages} pages)...")
 
-    source = MeetupSource()
+    source = MeetupSource(target_url=target_url)
     raw_events: List[Event] = source.collect_events(max_pages=max_pages)
     discovered_count = source.discovered_raw_count
     malformed_count = source.malformed_count

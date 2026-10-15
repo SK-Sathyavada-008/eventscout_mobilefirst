@@ -124,6 +124,13 @@ class RankingService:
             quality_score += 0.05
             why_recommended.append("Free registration")
 
+        # Local Hyderabad priority boost
+        c_val = (event.get("city") or "").lower()
+        ml_val = (event.get("mode_location") or event.get("location") or "").lower()
+        if "hyderabad" in c_val or "hyderabad" in ml_val or "secunderabad" in c_val:
+            quality_score += 0.15
+            why_recommended.append("Happening locally in Hyderabad")
+
         quality_score = min(1.0, quality_score)
         breakdown["quality_score"] = round(quality_score, 3)
 

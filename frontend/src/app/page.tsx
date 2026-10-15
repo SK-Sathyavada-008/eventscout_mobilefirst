@@ -227,6 +227,14 @@ export default function DiscoverPage() {
       .slice(0, 8);
   }, [categoryFilteredEvents]);
 
+  // Dedicated In-Person Hyderabad Events Showcase
+  const hyderabadEvents = useMemo(() => {
+    return categoryFilteredEvents.filter((ev) => {
+      const cat = classifyEventLocation(ev);
+      return cat === "Hyderabad";
+    });
+  }, [categoryFilteredEvents]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-6">
       {/* Hero Header matching Screen 2 */}
@@ -366,6 +374,43 @@ export default function DiscoverPage() {
               {/* Horizontal scrollable carousel */}
               <div className="flex items-stretch gap-3.5 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar snap-x snap-mandatory">
                 {happeningThisWeek.map((ev) => (
+                  <div key={ev.id || ev.title} className="snap-start">
+                    <EventCard
+                      event={ev}
+                      variant="featured"
+                      isSaved={ev.id ? savedIds.has(ev.id) : false}
+                      onToggleSave={isAuthenticated ? handleToggleSave : undefined}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* SECTION: 📍 Happening in Hyderabad (In-Person Focus) */}
+          {!searchQuery && hyderabadEvents.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-3.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">📍</span>
+                  <h2 className="text-lg sm:text-xl font-extrabold text-white tracking-tight">
+                    Happening in Hyderabad
+                  </h2>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    In-Person
+                  </span>
+                </div>
+                <Link
+                  href="/explore?location=Hyderabad"
+                  className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors"
+                >
+                  See all ({hyderabadEvents.length}) →
+                </Link>
+              </div>
+
+              {/* Horizontal scrollable carousel */}
+              <div className="flex items-stretch gap-3.5 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar snap-x snap-mandatory">
+                {hyderabadEvents.map((ev) => (
                   <div key={ev.id || ev.title} className="snap-start">
                     <EventCard
                       event={ev}

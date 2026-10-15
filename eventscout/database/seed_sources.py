@@ -76,12 +76,12 @@ PREDEFINED_SOURCES: List[Dict[str, Any]] = [
     {
         "name": "Meetup",
         "base_url": "https://www.meetup.com/",
-        "event_list_url": "https://www.meetup.com/find/?categoryId=546&source=EVENTS",
+        "event_list_url": "https://www.meetup.com/find/?location=in--hyderabad&categoryId=546&source=EVENTS",
         "source_type": "event_platform",
         "status": "ENABLED",
         "collection_strategy": "PLAYWRIGHT",
         "configuration": {
-            "target_url": "https://www.meetup.com/find/?categoryId=546&source=EVENTS",
+            "target_url": "https://www.meetup.com/find/?location=in--hyderabad&categoryId=546&source=EVENTS",
             "adapter": "meetup_graphql_interceptor",
             "category_id": 546,
         },
@@ -89,18 +89,23 @@ PREDEFINED_SOURCES: List[Dict[str, Any]] = [
     {
         "name": "Google Developer Groups",
         "base_url": "https://gdg.community.dev/",
-        "event_list_url": "https://gdg.community.dev/events/#/list",
+        "event_list_url": "https://gdg.community.dev/gdg-hyderabad/",
         "source_type": "community",
         "status": "ENABLED",
         "collection_strategy": "PLAYWRIGHT",
         "configuration": {
-            "target_url": "https://gdg.community.dev/events/#/list",
-            "container_selector": "a[href*='/events/details/'], div[class*='event-card']",
-            "wait_selector": "a[href*='/events/details/']",
+            "target_url": "https://gdg.community.dev/gdg-hyderabad/",
+            "target_urls": [
+                "https://gdg.community.dev/gdg-hyderabad/",
+                "https://gdg.community.dev/gdg-cloud-hyderabad/",
+                "https://gdg.community.dev/events/#/list",
+            ],
+            "container_selector": "a[href*='/events/details/'], div[class*='event-card'], div[class*='chapter_event'], div.c-events-list__item",
+            "wait_selector": "a[href*='/events/details/'], div[class*='event-card'], div.c-events-list__item",
             "fields": {
                 "title": {"selector": "h3, h4, [class*='title'], strong", "type": "text"},
-                "event_url": {"selector": "self", "type": "attribute", "attribute": "href"},
-                "date_time": {"selector": "[class*='date'], span, div", "type": "text"},
+                "event_url": {"selector": "self, a[href*='/events/details/']", "type": "attribute", "attribute": "href"},
+                "date_time": {"selector": "[class*='date'], span, div, time", "type": "text"},
                 "mode_location": {"selector": "[class*='location'], [class*='city'], [class*='venue']", "type": "text"},
                 "poster_image_url": {"selector": "img", "type": "attribute", "attribute": "src"},
             },
@@ -232,10 +237,14 @@ PREDEFINED_SOURCES: List[Dict[str, Any]] = [
         "base_url": "https://fossunited.org/",
         "event_list_url": "https://fossunited.org/events",
         "source_type": "community",
-        "status": "READY_FOR_REVIEW",
+        "status": "ENABLED",
         "collection_strategy": "PLAYWRIGHT",
         "configuration": {
             "target_url": "https://fossunited.org/events",
+            "target_urls": [
+                "https://fossunited.org/hyderabad",
+                "https://fossunited.org/events",
+            ],
             "container_selector": "div[class*='event-card'], div[class*='card']",
             "fields": {
                 "title": {"selector": "h3, h4, h2", "type": "text"},
@@ -251,7 +260,7 @@ PREDEFINED_SOURCES: List[Dict[str, Any]] = [
         "base_url": "https://www.iiit.ac.in/",
         "event_list_url": "https://www.iiit.ac.in/events/",
         "source_type": "university",
-        "status": "READY_FOR_REVIEW",
+        "status": "ENABLED",
         "collection_strategy": "HTML",
         "configuration": {
             "target_url": "https://www.iiit.ac.in/events/",
@@ -268,7 +277,7 @@ PREDEFINED_SOURCES: List[Dict[str, Any]] = [
         "base_url": "https://www.iith.ac.in/",
         "event_list_url": "https://www.iith.ac.in/events/",
         "source_type": "university",
-        "status": "READY_FOR_REVIEW",
+        "status": "ENABLED",
         "collection_strategy": "HTML",
         "configuration": {
             "target_url": "https://www.iith.ac.in/events/",
@@ -283,12 +292,12 @@ PREDEFINED_SOURCES: List[Dict[str, Any]] = [
     {
         "name": "Eventbrite",
         "base_url": "https://www.eventbrite.com/",
-        "event_list_url": "https://www.eventbrite.com/d/online/science-and-tech--events/",
+        "event_list_url": "https://www.eventbrite.com/d/india--hyderabad/science-and-tech--events/",
         "source_type": "event_platform",
         "status": "READY_FOR_REVIEW",
         "collection_strategy": "PLAYWRIGHT",
         "configuration": {
-            "target_url": "https://www.eventbrite.com/d/online/science-and-tech--events/",
+            "target_url": "https://www.eventbrite.com/d/india--hyderabad/science-and-tech--events/",
             "container_selector": "div[class*='event-card'], section.event-card-details, div.discover-horizontal-event-card",
             "wait_selector": "div[class*='event-card']",
             "fields": {

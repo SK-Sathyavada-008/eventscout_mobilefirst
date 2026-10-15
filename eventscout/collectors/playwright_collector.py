@@ -28,6 +28,9 @@ FALLBACK_CONTAINER_SELECTORS = [
     "div[class*='opportunity-card']",
     "div[class*='event-card']",
     "div[class*='eventCard']",
+    "div[class*='chapter_event']",
+    "div.c-events-list__item",
+    "div[class*='event-item']",
     "section.event-card-details",
     "div[class*='challenge-card']",
     "div.hackathon-tile",
@@ -42,8 +45,11 @@ class PlaywrightCollector(BaseCollector):
     """
 
     def collect(self, max_pages: int = 3) -> List[Dict[str, Any]]:
-        target_url = self.target_url
-        if not target_url:
+        target_urls = self.config.get("target_urls")
+        if not target_urls:
+            target_urls = [self.target_url] if self.target_url else []
+
+        if not target_urls:
             logger.error("No target_url specified for source %s", self.source_name)
             return []
 
@@ -53,6 +59,7 @@ class PlaywrightCollector(BaseCollector):
         wait_selector = self.config.get("wait_selector", container_selector)
 
         raw_events: List[Dict[str, Any]] = []
+        seen_event_urls = set()
 
         try:
             with sync_playwright() as p:
@@ -63,41 +70,46 @@ class PlaywrightCollector(BaseCollector):
                 )
                 page = context.new_page()
 
-                logger.info("[%s] Navigating to %s", self.source_name, target_url)
-                page.goto(target_url, wait_until="domcontentloaded", timeout=45000)
-
-                # Wait for main elements with reasonable timeout
-                if wait_selector:
+                for target_url in target_urls:
+                    logger.info("[%s] Navigating to %s", self.source_name, target_url)
                     try:
-                        page.wait_for_selector(wait_selector, timeout=6000)
-                    except PlaywrightTimeoutError:
-                        logger.debug("[%s] Settle wait on '%s' ended without match.", self.source_name, wait_selector)
+                        page.goto(target_url, wait_until="domcontentloaded", timeout=45000)
+                    except Exception as nav_err:
+                        logger.warning("[%s] Navigation warning for %s: %s", self.source_name, target_url, nav_err)
+                        continue
 
-                # Settle time for dynamic JavaScript hydration
-                time.sleep(2.5)
+                    # Wait for main elements with reasonable timeout
+                    if wait_selector:
+                        try:
+                            page.wait_for_selector(wait_selector, timeout=6000)
+                        except PlaywrightTimeoutError:
+                            logger.debug("[%s] Settle wait on '%s' ended without match.", self.source_name, wait_selector)
 
-                pag_type = pagination_config.get("type", "scroll")
-                pages_scraped = 0
+                    # Settle time for dynamic JavaScript hydration
+                    time.sleep(2.5)
 
-                while pages_scraped < max_pages:
-                    pages_scraped += 1
+                    pag_type = pagination_config.get("type", "scroll")
+                    pages_scraped = 0
 
-                    # Extract currently visible cards
-                    cards = []
-                    if container_selector:
-                        cards = page.query_selector_all(container_selector)
+                    while pages_scraped < max_pages:
+                        pages_scraped += 1
 
-                    # Fallback container matching if primary selector returned 0 cards
-                    if not cards:
-                        for fb_sel in FALLBACK_CONTAINER_SELECTORS:
-                            candidate_cards = page.query_selector_all(fb_sel)
-                            if candidate_cards and len(candidate_cards) >= 2:
-                                logger.info("[%s] Primary selector returned 0; fallback selector '%s' found %d cards.",
-                                            self.source_name, fb_sel, len(candidate_cards))
-                                cards = candidate_cards
-                                break
+                        # Extract currently visible cards
+                        cards = []
+                        if container_selector:
+                            cards = page.query_selector_all(container_selector)
 
-                    logger.info("[%s] Page %d: Found %d item containers", self.source_name, pages_scraped, len(cards))
+                        # Fallback container matching if primary selector returned 0 cards
+                        if not cards:
+                            for fb_sel in FALLBACK_CONTAINER_SELECTORS:
+                                candidate_cards = page.query_selector_all(fb_sel)
+                                if candidate_cards and len(candidate_cards) >= 1:
+                                    logger.info("[%s] Primary selector returned 0; fallback selector '%s' found %d cards.",
+                                                self.source_name, fb_sel, len(candidate_cards))
+                                    cards = candidate_cards
+                                    break
+
+                        logger.info("[%s] [%s] Page %d: Found %d item containers", self.source_name, target_url, pages_scraped, len(cards))
 
                     for idx, card in enumerate(cards):
                         event_data: Dict[str, Any] = {"_raw_index": idx}
@@ -257,9 +269,19 @@ class PlaywrightCollector(BaseCollector):
                                 if a_el and a_el.get_attribute("href"):
                                     event_data["event_url"] = urljoin(page.url, a_el.get_attribute("href"))
 
-                        # Retain if title exists
+                        # If page or target URL is specifically a Hyderabad chapter/event, ensure Hyderabad location
+                        if "hyderabad" in target_url.lower() or "hyderabad" in page.url.lower():
+                            if not event_data.get("city") or event_data.get("mode_location") == "Online":
+                                event_data["city"] = "Hyderabad"
+                                event_data["country"] = "India"
+                                event_data["mode_location"] = "Offline - Hyderabad"
+
+                        ev_url_val = event_data.get("event_url") or event_data.get("title")
+                        # Retain if title exists and not duplicate
                         if event_data.get("title") and len(str(event_data.get("title"))) > 1:
-                            raw_events.append(event_data)
+                            if ev_url_val not in seen_event_urls:
+                                seen_event_urls.add(ev_url_val)
+                                raw_events.append(event_data)
 
                     # Check pagination
                     if pages_scraped >= max_pages:

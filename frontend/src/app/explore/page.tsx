@@ -21,11 +21,17 @@ function ExploreContent() {
   const { user, token, isAuthenticated, refreshUser, updateUser } = useAuth();
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
+  const initialLocParam = searchParams.get("location");
+  const initialLocation: LocationCategory =
+    initialLocParam && ["Hyderabad", "India", "USA", "Online", "Other", "All"].includes(initialLocParam)
+      ? (initialLocParam as LocationCategory)
+      : "All";
+
   // Filter & Search states
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedCategoryChip, setSelectedCategoryChip] = useState<string>("All");
   const [selectedMode, setSelectedMode] = useState<string>("All");
-  const [selectedLocation, setSelectedLocation] = useState<LocationCategory>("All");
+  const [selectedLocation, setSelectedLocation] = useState<LocationCategory>(initialLocation);
   const [selectedPrice, setSelectedPrice] = useState<string>("All");
   const [selectedSource, setSelectedSource] = useState<string>("All");
   const [sortBy, setSortBy] = useState<string>("recommended");

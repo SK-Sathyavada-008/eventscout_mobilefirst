@@ -373,6 +373,35 @@ class TestLocationFilter(unittest.TestCase):
         self.assertEqual(len(india_events), 1)
         self.assertEqual(india_events[0]["title"], "Bengaluru React")
 
+    def test_devfest_hyderabad_and_flagship_events_classification(self):
+        """Verify Google DevFest Hyderabad and flagship tech community events are classified as Hyderabad and match filters."""
+        devfest_hyd = {
+            "title": "Google DevFest Hyderabad 2026",
+            "mode_location": "Offline - Hyderabad",
+            "city": "Hyderabad",
+            "country": "India",
+            "location": "Hyderabad, India",
+            "organizer": "Google Developer Groups Hyderabad",
+            "event_url": "https://gdg.community.dev/events/details/google-gdg-hyderabad-presents-devfest-2026/",
+        }
+        self.assertEqual(classify_event_location(devfest_hyd), "Hyderabad")
+        self.assertTrue(match_location_filter(devfest_hyd, "All"))
+        self.assertTrue(match_location_filter(devfest_hyd, "Hyderabad"))
+        self.assertFalse(match_location_filter(devfest_hyd, "USA"))
+        self.assertFalse(match_location_filter(devfest_hyd, "Online"))
+
+        gdg_cloud = {
+            "title": "GDG Cloud Hyderabad: Build with AI & Gemini Workshop",
+            "event_url": "https://gdg.community.dev/events/details/google-gdg-cloud-hyderabad-presents-build-with-ai-gemini/",
+            "organizer": "GDG Cloud Hyderabad",
+            "mode_location": "Offline - Hyderabad",
+            "city": "Hyderabad",
+        }
+        self.assertEqual(classify_event_location(gdg_cloud), "Hyderabad")
+        self.assertTrue(match_location_filter(gdg_cloud, "All"))
+        self.assertTrue(match_location_filter(gdg_cloud, "Hyderabad"))
+
 
 if __name__ == "__main__":
     unittest.main()
+

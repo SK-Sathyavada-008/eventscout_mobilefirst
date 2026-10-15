@@ -16,7 +16,7 @@ from eventscout.sources.base import EventSource
 
 logger = logging.getLogger("MeetupSource")
 
-TARGET_URL = "https://www.meetup.com/find/?categoryId=546&source=EVENTS"
+TARGET_URL = "https://www.meetup.com/find/?location=in--hyderabad&categoryId=546&source=EVENTS"
 PAGE_TIMEOUT_SECONDS = 20.0
 
 
@@ -90,7 +90,15 @@ def parse_meetup_node(node: Dict[str, Any], index: int = 0) -> Optional[Event]:
         if isinstance(display_photo, dict):
             poster_image_url = _clean_str(display_photo.get("highResUrl"))
 
-    # 6. Location & Attendance Mode
+    # 6. Description & Pricing metadata
+    description = _clean_str(node.get("description"))
+    fee_settings = node.get("feeSettings") if isinstance(node.get("feeSettings"), dict) else {}
+    is_free = not bool(fee_settings) or fee_settings.get("amount") in (0, None, 0.0)
+    price_amount = float(fee_settings["amount"]) if fee_settings.get("amount") is not None else (0.0 if is_free else None)
+    price_currency = _clean_str(fee_settings.get("currency"))
+    source_event_id = _clean_str(node.get("id")) or event_url
+
+    # 7. Location & Attendance Mode
     event_type = _clean_str(node.get("eventType"))
     venue = node.get("venue") if isinstance(node.get("venue"), dict) else {}
     venue_city = _clean_str(venue.get("city"))
@@ -150,8 +158,8 @@ class MeetupSource(EventSource):
     Scrapes events from Meetup using Playwright network interception and dynamic scroll pagination.
     """
 
-    def __init__(self, target_url: str = TARGET_URL):
-        self.target_url = target_url
+    def __init__(self, target_url: Optional[str] = None):
+        self.target_url = target_url or TARGET_URL
         self.discovered_raw_count = 0
         self.malformed_count = 0
 

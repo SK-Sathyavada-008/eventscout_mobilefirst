@@ -157,10 +157,10 @@ def normalize_event_location(raw_item: Dict[str, Any]) -> Dict[str, Any]:
     # 1. URL cleanup: If mode_location is a URL, it is a scraper artifact
     if raw_text.startswith("http://") or raw_text.startswith("https://"):
         url_lower = raw_text.lower()
-        if "gdg" in url_lower or "gdg.community.dev" in url_lower:
+        if "gdg" in url_lower or "gdg.community.dev" in url_lower or "gdg" in event_url.lower():
             matched_city = None
-            for c in ["nagpur", "chennai", "hubli", "bengaluru", "delhi", "mumbai", "hyderabad", "pune", "kolkata"]:
-                if f"-{c}-" in url_lower or f"/{c}" in url_lower:
+            for c in ["hyderabad", "secunderabad", "nagpur", "chennai", "hubli", "bengaluru", "delhi", "mumbai", "pune", "kolkata"]:
+                if c in url_lower or c in event_url.lower():
                     matched_city = c.capitalize()
                     break
             if matched_city:
