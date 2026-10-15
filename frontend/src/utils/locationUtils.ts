@@ -14,12 +14,12 @@ export interface LocationOption {
 }
 
 export const LOCATION_OPTIONS: LocationOption[] = [
-  { id: "All", label: "All Locations" },
+  { id: "All", label: "All (Hyderabad & Online)" },
   { id: "Hyderabad", label: "Hyderabad" },
+  { id: "Online", label: "Online" },
   { id: "India", label: "India (Other)" },
   { id: "USA", label: "USA" },
-  { id: "Online", label: "Online" },
-  { id: "Other", label: "Other / Unknown" },
+  { id: "Other", label: "Other / International" },
 ];
 
 const ONLINE_REGEX = /\b(online|virtual|remote|digital|webinar|everywhere|worldwide|livestream|live stream|zoom|teams|twitch|youtube|discord)\b/i;
@@ -205,6 +205,11 @@ export function classifyEventLocation(event: Event): LocationCategory {
  */
 export function matchLocationFilter(event: Event, selectedLocation: string): boolean {
   if (!selectedLocation || selectedLocation.toLowerCase() === "all") {
+    // Focus on Hyderabad and Online events as the primary application focus
+    const category = classifyEventLocation(event);
+    return category === "Hyderabad" || category === "Online";
+  }
+  if (selectedLocation.toLowerCase() === "everywhere" || selectedLocation.toLowerCase() === "worldwide") {
     return true;
   }
   const category = classifyEventLocation(event);

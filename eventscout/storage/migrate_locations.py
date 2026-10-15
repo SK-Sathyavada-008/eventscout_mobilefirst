@@ -140,9 +140,14 @@ def main():
 
     logger.info("Starting EventScout location normalization (%s mode)...", "APPLY" if args.apply else "DRY-RUN")
 
-    db = EventDatabase()
-    raw_docs = db.find_all()
-    logger.info("Retrieved %d events from MongoDB.", len(raw_docs))
+    raw_docs = []
+    db = None
+    try:
+        db = EventDatabase()
+        raw_docs = db.find_all()
+        logger.info("Retrieved %d events from MongoDB.", len(raw_docs))
+    except Exception as e:
+        logger.warning("MongoDB unavailable for migration (%s). Processing file stores.", e)
 
     updates, before_cats, after_cats = plan_migration(raw_docs)
 
@@ -172,8 +177,13 @@ def main():
         print("=" * 70)
         return
 
-    # Apply to MongoDB
-    applied_count = apply_mongo_migration(db, updates)
+    # Apply to MongoDB if connected
+    applied_count = 0
+    if db and updates:
+        try:
+            applied_count = apply_mongo_migration(db, updates)
+        except Exception as ex:
+            logger.warning("Could not apply to MongoDB: %s", ex)
 
     # Normalize JSON fallback files
     json_path1 = REPO_ROOT / "data" / "events.json"

@@ -159,7 +159,7 @@ def scrape_meetup_events(
     rejected_non_technical = 0
 
     for event in raw_events:
-        if event.mode_location != "Online":
+        if event.mode != "online" and event.mode_location != "Online":
             city = (event.city or "").lower()
             mode_loc = (event.mode_location or "").lower()
             loc_str = (event.location or "").lower()

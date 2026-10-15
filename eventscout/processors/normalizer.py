@@ -265,7 +265,13 @@ class EventNormalizer:
         organizer = raw_item.get("organizer") or raw_item.get("host") or source_name
         organizer = str(organizer).strip() if organizer else source_name
 
-        # 5. Location / Mode canonical normalization
+        # 5. Description & Location / Mode canonical normalization
+        description = raw_item.get("description")
+        if description:
+            description = str(description).strip()
+            if description.startswith("http://") or description.startswith("https://"):
+                description = None
+
         # Ensures truthful classification, sanitizes scraper artifacts, and identifies Hyderabad / USA / India
         loc_meta = normalize_event_location({
             "mode_location": raw_item.get("mode_location"),
@@ -275,6 +281,7 @@ class EventNormalizer:
             "title": title,
             "source": source_name,
             "event_url": event_url,
+            "description": description,
         })
 
         # 6. Pricing

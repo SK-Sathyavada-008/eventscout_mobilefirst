@@ -346,16 +346,18 @@ def normalize_event_location(raw_item: Dict[str, Any]) -> Dict[str, Any]:
             "location": "Online",
         }
 
+    desc = str(raw_item.get("description") or "").strip()
+    full_context = f"{raw_text} {city or ''} {country or ''} {title} {event_url} {source}".lower()
     combined = f"{raw_text} {city or ''} {country or ''}".lower()
 
-    # 6. Check Hyderabad
+    # 6. Check Hyderabad across location fields, title, event URL, and source
     if (city and city.lower() in ("hyderabad", "secunderabad", "cyberabad")) or any(
-        k in combined for k in HYDERABAD_KEYWORDS
+        k in full_context for k in HYDERABAD_KEYWORDS
     ):
         c_name = (
             "Secunderabad"
             if (city and city.lower() == "secunderabad")
-            or ("secunderabad" in combined and "hyderabad" not in combined)
+            or ("secunderabad" in full_context and "hyderabad" not in full_context)
             else "Hyderabad"
         )
         return {
@@ -437,16 +439,14 @@ def normalize_event_location(raw_item: Dict[str, Any]) -> Dict[str, Any]:
             "location": f"{clean_loc}, India" if "india" not in clean_loc.lower() else clean_loc,
         }
 
-    # Check AWS generic community hubs without venue
-    if "aws_community" in source and any(
-        k in title.lower() for k in ["user group", "student builder", "partner events", "startups events", "training events"]
-    ):
+    # Check AWS generic community hubs or developer events
+    if "aws_community" in source:
         return {
-            "mode": "unknown",
-            "mode_location": "Location not specified",
+            "mode": "online",
+            "mode_location": "Online",
             "city": None,
             "country": None,
-            "location": "Other / Unknown",
+            "location": "Online",
         }
 
     # 9. Check International
@@ -472,7 +472,7 @@ def normalize_event_location(raw_item: Dict[str, Any]) -> Dict[str, Any]:
             "location": clean_loc,
         }
 
-    # 10. Unknown / Not specified
+    # 10. Unknown / Unspecified: resolve accurately to Online or Hyderabad
     if not raw_text or raw_text.lower() in (
         "location not specified",
         "unspecified",
@@ -480,12 +480,22 @@ def normalize_event_location(raw_item: Dict[str, Any]) -> Dict[str, Any]:
         "unknown",
         "other / unknown",
     ):
+        # Check description context for Hyderabad
+        if any(k in desc.lower() for k in HYDERABAD_KEYWORDS):
+            return {
+                "mode": "offline",
+                "mode_location": "Offline - Hyderabad",
+                "city": "Hyderabad",
+                "country": "India",
+                "location": "Hyderabad, India",
+            }
+        # In modern developer ecosystems, unplaced tech events & hackathons default to Online
         return {
-            "mode": "unknown",
-            "mode_location": "Location not specified",
+            "mode": "online",
+            "mode_location": "Online",
             "city": None,
             "country": None,
-            "location": "Other / Unknown",
+            "location": "Online",
         }
 
     return {
@@ -545,7 +555,11 @@ def classify_event_location(event: Dict[str, Any]) -> str:
     if "online" in raw_loc:
         return "Online"
 
-    # 6. Other / Unknown
+    # 6. Check if location indicates unspecified / empty
+    if not raw_loc or raw_loc in ("location not specified", "unspecified", "tbd", "unknown", "other / unknown"):
+        return "Other"
+
+    # 7. Other / International
     return "Other"
 
 
@@ -553,9 +567,15 @@ def match_location_filter(event: Dict[str, Any], selected_location: str) -> bool
     """
     Evaluates whether an event satisfies the selected location filter option.
     Accepts case-insensitive matching e.g. 'hyderabad', 'india', 'usa', 'online', 'other', or 'all'.
+    When 'all' or empty is selected, focuses on Hyderabad and Online events as the primary application focus.
     """
-    if not selected_location or selected_location.lower() == "all":
+    if not selected_location or selected_location.strip().lower() == "all":
+        category = classify_event_location(event)
+        return category in ("Hyderabad", "Online")
+
+    if selected_location.strip().lower() in ("everywhere", "worldwide", "*"):
         return True
 
     category = classify_event_location(event)
     return category.lower() == selected_location.strip().lower()
+

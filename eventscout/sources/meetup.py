@@ -97,37 +97,31 @@ def parse_meetup_node(node: Dict[str, Any], index: int = 0) -> Optional[Event]:
     venue_name = _clean_str(venue.get("name"))
     venue_country = _clean_str(venue.get("country"))
 
-    if event_type == "ONLINE":
+    group = node.get("group") if isinstance(node.get("group"), dict) else {}
+    group_city = _clean_str(group.get("city")) if isinstance(group, dict) else None
+    group_loc = _clean_str(group.get("localized_location")) if isinstance(group, dict) else None
+    group_name = _clean_str(group.get("name")) if isinstance(group, dict) else ""
+
+    combined_node = f"{title} {event_url} {group_name or ''} {group_city or ''} {group_loc or ''} {venue_city or ''} {venue_name or ''}".lower()
+
+    if any(h in combined_node for h in ("hyderabad", "secunderabad", "cyberabad", "hitec city", "gachibowli", "madhapur", "t-hub", "vnrvjiet")):
+        venue_city = "Hyderabad"
+        country_clean = "India"
+        mode = "offline"
+        mode_location = "Offline - Hyderabad"
+        location_str = "Hyderabad, India"
+    elif event_type == "ONLINE" or "online" in combined_node or not venue:
+        mode = "online"
         mode_location = "Online"
+        location_str = "Online"
+        venue_city = None
+        country_clean = None
     else:
-        location_detail = venue_city or venue_name or "Location not specified"
+        location_detail = venue_city or venue_name or group_city or "In-Person"
+        mode = "offline"
         mode_location = f"Offline - {location_detail}"
-
-    # 7. Price Settings
-    fee_settings = node.get("feeSettings")
-    if fee_settings is None:
-        is_free = True
-        price_amount: Optional[float] = None
-        price_currency: Optional[str] = None
-    else:
-        is_free = False
-        raw_amount = fee_settings.get("amount") if isinstance(fee_settings, dict) else None
-        raw_currency = fee_settings.get("currency") if isinstance(fee_settings, dict) else None
-
-        try:
-            price_amount = float(raw_amount) if raw_amount is not None else None
-        except (ValueError, TypeError):
-            price_amount = None
-
-        price_currency = _clean_str(raw_currency)
-
-    # 8. Description & Source Event ID (Enriched fields)
-    description = _clean_str(node.get("description"))
-    source_event_id = _clean_str(node.get("id"))
-
-    mode = "online" if event_type == "ONLINE" else "offline"
-    country_clean = "India" if (venue_country and venue_country.lower() in ("in", "india")) else venue_country
-    location_str = "Online" if mode == "online" else (f"{venue_city or location_detail}, {country_clean}" if country_clean else (venue_city or location_detail))
+        country_clean = "India" if (venue_country and venue_country.lower() in ("in", "india")) else venue_country
+        location_str = f"{location_detail}, {country_clean}" if country_clean else location_detail
 
     return Event(
         title=title,

@@ -7,6 +7,7 @@ import { Event } from "@/types/event";
 import EventCard from "@/components/EventCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { isHackathon, isWorkshop, isConference, EventSectionType } from "@/utils/eventUtils";
+import { classifyEventLocation } from "@/utils/locationUtils";
 import PWAInstallModal from "@/components/PWAInstallModal";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import SuggestSourceModal from "@/components/SuggestSourceModal";
@@ -167,15 +168,24 @@ export default function DiscoverPage() {
     [apiUrl, token, user, refreshUser, updateUser, router]
   );
 
+  // Focus on Hyderabad and Online events as the primary application focus
+  const focusEvents = useMemo(() => {
+    const hydOrOnline = events.filter((ev) => {
+      const cat = classifyEventLocation(ev);
+      return cat === "Hyderabad" || cat === "Online";
+    });
+    return hydOrOnline.length > 0 ? hydOrOnline : events;
+  }, [events]);
+
   // Filter by Category first
   const categoryFilteredEvents = useMemo(() => {
-    return events.filter((ev) => {
+    return focusEvents.filter((ev) => {
       if (activeCategory === "hackathons" && !isHackathon(ev)) return false;
       if (activeCategory === "workshops" && !isWorkshop(ev)) return false;
       if (activeCategory === "conferences" && !isConference(ev)) return false;
       return true;
     });
-  }, [events, activeCategory]);
+  }, [focusEvents, activeCategory]);
 
   // Filtered by Search
   const filteredEvents = useMemo(() => {

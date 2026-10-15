@@ -238,7 +238,7 @@ export default function EventDetailPage() {
       `DTSTART:${start}`,
       `SUMMARY:${event.title}`,
       `DESCRIPTION:${event.description || "View full details on EventScout."}`,
-      `LOCATION:${event.location || event.mode_location || "Online"}`,
+      `LOCATION:${(event.location && event.location !== "Other / Unknown" && event.location !== "Location not specified") ? event.location : (event.mode_location && event.mode_location !== "Location not specified" ? event.mode_location : "Online")}`,
       `URL:${event.registration_url || event.event_url || ""}`,
       "END:VEVENT",
       "END:VCALENDAR"
@@ -431,7 +431,15 @@ export default function EventDetailPage() {
           </div>
           <div>
             <div className="text-[11px] text-slate-400 uppercase font-semibold">Location / Venue</div>
-            <div className="font-bold text-white">{event.location || event.mode_location || "Online"}</div>
+            <div className="font-bold text-white">
+              {(() => {
+                const loc = (event.location || event.mode_location || "").trim();
+                if (loc && loc !== "Other / Unknown" && loc !== "Location not specified" && !loc.startsWith("http")) {
+                  return loc.includes("\n") ? loc.split("\n")[0].trim() : loc;
+                }
+                return event.city ? `${event.city}, ${event.country || "India"}` : "Online";
+              })()}
+            </div>
           </div>
         </div>
 

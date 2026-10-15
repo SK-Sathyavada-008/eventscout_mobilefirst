@@ -397,8 +397,12 @@ class EventDatabase:
                 elif m_lower in ["in-person", "offline"] and not is_offline_event(doc):
                     continue
 
-            if location and location.strip() and location.lower() != "all":
+            if location and location.strip().lower() not in ("all", "everywhere", "worldwide"):
                 if not match_location_filter(doc, location):
+                    continue
+            elif not location or location.strip().lower() == "all":
+                # Application focus: Hyderabad and Online events as the primary focus
+                if not match_location_filter(doc, "all"):
                     continue
 
             active_events.append(doc)

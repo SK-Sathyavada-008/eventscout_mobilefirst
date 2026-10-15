@@ -2953,7 +2953,7 @@
     "event_url": "https://builder.aws.com/community/user-groups",
     "is_free": true,
     "is_technical": true,
-    "mode_location": "Location not specified",
+    "mode_location": "Online",
     "organizer": "AWS Community",
     "poster_image_url": null,
     "price_amount": null,
@@ -2964,7 +2964,7 @@
     "id": "6aa672577754c947b035ecc8",
     "organization": "AWS Community",
     "registrationUrl": "https://builder.aws.com/community/user-groups",
-    "location": "Other / Unknown",
+    "location": "Online",
     "ranking_score": 0.742,
     "why_recommended": [
       "Hosted by premier tech leader Amazon Web Services",
@@ -2980,7 +2980,7 @@
     "host_tier": "TIER_1_COMPANY",
     "host_badge": "Tier 1 Tech Leader",
     "host_verified": true,
-    "mode": "unknown"
+    "mode": "online"
   },
   {
     "_id": "6aa672577754c947b035ecc9",
@@ -2995,7 +2995,7 @@
     "event_url": "https://builder.aws.com/community/student-builder-groups",
     "is_free": true,
     "is_technical": true,
-    "mode_location": "Location not specified",
+    "mode_location": "Online",
     "organizer": "AWS Community",
     "poster_image_url": null,
     "price_amount": null,
@@ -3006,7 +3006,7 @@
     "id": "6aa672577754c947b035ecc9",
     "organization": "AWS Community",
     "registrationUrl": "https://builder.aws.com/community/student-builder-groups",
-    "location": "Other / Unknown",
+    "location": "Online",
     "ranking_score": 0.742,
     "why_recommended": [
       "Hosted by premier tech leader Amazon Web Services",
@@ -3022,7 +3022,7 @@
     "host_tier": "TIER_1_COMPANY",
     "host_badge": "Tier 1 Tech Leader",
     "host_verified": true,
-    "mode": "unknown"
+    "mode": "online"
   },
   {
     "_id": "6aa672577754c947b035ecca",
@@ -3079,7 +3079,7 @@
     "event_url": "https://aws.amazon.com/events/aws-partner-events/",
     "is_free": true,
     "is_technical": true,
-    "mode_location": "Location not specified",
+    "mode_location": "Online",
     "organizer": "AWS Community",
     "poster_image_url": null,
     "price_amount": null,
@@ -3090,7 +3090,7 @@
     "id": "6aa672577754c947b035eccb",
     "organization": "AWS Community",
     "registrationUrl": "https://aws.amazon.com/events/aws-partner-events/",
-    "location": "Other / Unknown",
+    "location": "Online",
     "ranking_score": 0.742,
     "why_recommended": [
       "Hosted by premier tech leader Amazon Web Services",
@@ -3106,7 +3106,7 @@
     "host_tier": "TIER_1_COMPANY",
     "host_badge": "Tier 1 Tech Leader",
     "host_verified": true,
-    "mode": "unknown"
+    "mode": "online"
   },
   {
     "_id": "6aa672577754c947b035eccc",
@@ -3121,7 +3121,7 @@
     "event_url": "https://aws.amazon.com/startups/events/",
     "is_free": true,
     "is_technical": true,
-    "mode_location": "Location not specified",
+    "mode_location": "Online",
     "organizer": "AWS Community",
     "poster_image_url": null,
     "price_amount": null,
@@ -3132,7 +3132,7 @@
     "id": "6aa672577754c947b035eccc",
     "organization": "AWS Community",
     "registrationUrl": "https://aws.amazon.com/startups/events/",
-    "location": "Other / Unknown",
+    "location": "Online",
     "ranking_score": 0.742,
     "why_recommended": [
       "Hosted by premier tech leader Amazon Web Services",
@@ -3148,7 +3148,7 @@
     "host_tier": "TIER_1_COMPANY",
     "host_badge": "Tier 1 Tech Leader",
     "host_verified": true,
-    "mode": "unknown"
+    "mode": "online"
   },
   {
     "_id": "6aa672577754c947b035eccd",
@@ -3163,7 +3163,7 @@
     "event_url": "https://aws.amazon.com/training/events/",
     "is_free": true,
     "is_technical": true,
-    "mode_location": "Location not specified",
+    "mode_location": "Online",
     "organizer": "AWS Community",
     "poster_image_url": null,
     "price_amount": null,
@@ -3174,7 +3174,7 @@
     "id": "6aa672577754c947b035eccd",
     "organization": "AWS Community",
     "registrationUrl": "https://aws.amazon.com/training/events/",
-    "location": "Other / Unknown",
+    "location": "Online",
     "ranking_score": 0.742,
     "why_recommended": [
       "Hosted by premier tech leader Amazon Web Services",
@@ -3190,7 +3190,7 @@
     "host_tier": "TIER_1_COMPANY",
     "host_badge": "Tier 1 Tech Leader",
     "host_verified": true,
-    "mode": "unknown"
+    "mode": "online"
   },
   {
     "_id": "6aa672577754c947b035ecce",

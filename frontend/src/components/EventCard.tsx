@@ -22,7 +22,7 @@ export function getEventId(event: Event): string {
 
 export function formatDisplayLocation(event: Event): string {
   const loc = (event.location || "").trim();
-  if (loc && loc !== "Other / Unknown" && !loc.startsWith("http://") && !loc.startsWith("https://")) {
+  if (loc && loc !== "Other / Unknown" && loc !== "Location not specified" && !loc.startsWith("http://") && !loc.startsWith("https://")) {
     return loc.includes("\n") ? loc.split("\n")[0].trim() : loc;
   }
   const modeLoc = (event.mode_location || "").trim();
@@ -32,11 +32,8 @@ export function formatDisplayLocation(event: Event): string {
   if (modeLoc.includes("\n")) {
     return modeLoc.split("\n")[0].trim();
   }
-  if (modeLoc && modeLoc !== "Location not specified") return modeLoc;
+  if (modeLoc && modeLoc !== "Location not specified" && modeLoc !== "Other / Unknown") return modeLoc;
   if (event.city) return event.country ? `${event.city}, ${event.country}` : event.city;
-  if (loc === "Other / Unknown" || modeLoc === "Location not specified") {
-    return "Location not specified";
-  }
   return "Online";
 }
 

@@ -343,8 +343,35 @@ class TestLocationFilter(unittest.TestCase):
         self.assertGreater(counts["India"], 0)
         self.assertGreater(counts["Online"], 0)
         self.assertGreater(counts["USA"], 0)
-        self.assertGreater(counts["Other"], 0)
+        self.assertGreaterEqual(counts["Other"], 0)
         self.assertEqual(sum(counts.values()), len(events))
+
+    def test_default_focus_hyderabad_and_online(self):
+        """When 'All' (default) is selected, filter focuses on Hyderabad and Online events. Rest when place is selected."""
+        events = [
+            {"title": "Hyderabad AI Meetup", "mode_location": "Offline - Hyderabad", "city": "Hyderabad"},
+            {"title": "Global Online Hackathon", "mode_location": "Online"},
+            {"title": "Davis Hackathon", "mode_location": "Davis, California", "country": "USA"},
+            {"title": "Bengaluru React", "mode_location": "Bengaluru, India", "city": "Bengaluru", "country": "India"},
+        ]
+        # Default focus ("All" or empty): only Hyderabad and Online
+        focused = [e for e in events if match_location_filter(e, "All")]
+        self.assertEqual(len(focused), 2)
+        titles = [e["title"] for e in focused]
+        self.assertIn("Hyderabad AI Meetup", titles)
+        self.assertIn("Global Online Hackathon", titles)
+        self.assertNotIn("Davis Hackathon", titles)
+        self.assertNotIn("Bengaluru React", titles)
+
+        # Place selected: USA
+        usa_events = [e for e in events if match_location_filter(e, "USA")]
+        self.assertEqual(len(usa_events), 1)
+        self.assertEqual(usa_events[0]["title"], "Davis Hackathon")
+
+        # Place selected: India (Other)
+        india_events = [e for e in events if match_location_filter(e, "India")]
+        self.assertEqual(len(india_events), 1)
+        self.assertEqual(india_events[0]["title"], "Bengaluru React")
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ tests/test_event_filters.py
 Tests for event querying, multi-criteria filtering, and sorting combinations.
 """
 
+from unittest.mock import MagicMock
 import pytest
 from eventscout.database.mongodb import EventDatabase
 
@@ -11,6 +12,9 @@ from eventscout.database.mongodb import EventDatabase
 def test_event_database_query_filtering(sample_events):
     """Test memory or live DB multi-criteria query logic."""
     db = EventDatabase()
+    mock_col = MagicMock()
+    mock_col.find.return_value = list(sample_events)
+    db.get_collection = MagicMock(return_value=mock_col)
 
     # Query with combined filters
     hackathons = db.query_events(
@@ -31,9 +35,12 @@ def test_event_database_query_filtering(sample_events):
         assert "hackathon" in text or "hack" in text or "code" in text or "build" in text
 
 
-def test_sorting_strategies():
+def test_sorting_strategies(sample_events):
     """Verify different sorting algorithms work as expected."""
     db = EventDatabase()
+    mock_col = MagicMock()
+    mock_col.find.return_value = list(sample_events)
+    db.get_collection = MagicMock(return_value=mock_col)
 
     soonest = db.query_events(sort_by="soonest", limit=5)
     assert isinstance(soonest, list)

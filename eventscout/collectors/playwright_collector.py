@@ -187,7 +187,10 @@ class PlaywrightCollector(BaseCollector):
                                             break
 
                                 elif field_name in ("mode_location", "location", "venue", "city"):
-                                    loc_candidates = card.query_selector_all("[class*='location'], [class*='venue'], [class*='city'], [class*='place'], [class*='address'], [data-testid*='location']")
+                                    loc_candidates = card.query_selector_all(
+                                        "[class*='location'], [class*='venue'], [class*='city'], [class*='place'], [class*='address'], "
+                                        "[data-testid*='location'], [class*='badge'], [class*='pill'], [class*='tag'], [class*='chip'], [class*='info']"
+                                    )
                                     for loc_el in loc_candidates:
                                         l_text = (loc_el.inner_text() or "").strip()
                                         if l_text and not l_text.lower().startswith("http") and len(l_text) < 150:
@@ -216,12 +219,33 @@ class PlaywrightCollector(BaseCollector):
 
                         # If location / mode_location is not yet found, attempt extraction from card
                         if not event_data.get("mode_location") and not event_data.get("location"):
-                            loc_candidates = card.query_selector_all("[class*='location'], [class*='venue'], [class*='city'], [class*='place'], [class*='address'], [data-testid*='location']")
-                            for loc_el in loc_candidates:
-                                l_text = (loc_el.inner_text() or "").strip()
-                                if l_text and not l_text.lower().startswith("http") and len(l_text) < 150:
-                                    event_data["mode_location"] = l_text
-                                    break
+                            card_text = (card.inner_text() or "").lower()
+                            combined_text = f"{card_text} {str(event_data.get('title', '')).lower()} {str(event_data.get('event_url', '')).lower()}"
+
+                            # 1. Check for Hyderabad keywords
+                            if any(k in combined_text for k in ("hyderabad", "secunderabad", "cyberabad", "hitec city", "gachibowli", "madhapur", "t-hub", "vnrvjiet")):
+                                event_data["mode_location"] = "Offline - Hyderabad"
+                                event_data["city"] = "Hyderabad"
+                                event_data["country"] = "India"
+                            # 2. Check for explicit Online in card text
+                            elif any(k in card_text for k in ("online", "virtual", "remote", "digital", "webinar", "zoom")):
+                                event_data["mode_location"] = "Online"
+                            # 3. Check for specific venue classes
+                            else:
+                                loc_candidates = card.query_selector_all(
+                                    "[class*='location'], [class*='venue'], [class*='city'], [class*='place'], [class*='address'], [data-testid*='location']"
+                                )
+                                for loc_el in loc_candidates:
+                                    l_text = (loc_el.inner_text() or "").strip()
+                                    if l_text and not l_text.lower().startswith("http") and len(l_text) < 150:
+                                        event_data["mode_location"] = l_text
+                                        break
+                            # 4. If still not found, check if source is online-first platform or hackathon
+                            if not event_data.get("mode_location"):
+                                if any(p in self.source_name.lower() for p in ("devpost", "devfolio", "hackerearth", "reactor", "unstop", "aws_community")):
+                                    event_data["mode_location"] = "Online"
+                                else:
+                                    event_data["mode_location"] = "Online"
 
                         # Ensure valid event_url exists
                         if not event_data.get("event_url"):
