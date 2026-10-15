@@ -76,7 +76,7 @@ function ExploreContent() {
         if (cancelled) return;
         console.warn("Using fallback events:", err?.message || err);
         try {
-          const fallbackRes = await fetch("/fallback_events.json");
+          const fallbackRes = await fetch(`/fallback_events.json?v=${Date.now()}`);
           if (fallbackRes.ok) {
             const fallbackData = await fallbackRes.json();
             setEvents(fallbackData);
